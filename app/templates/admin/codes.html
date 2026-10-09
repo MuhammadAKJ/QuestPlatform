@@ -1,0 +1,163 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Access Codes Management - QuestPlatform Admin{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">🔑 Access Code Center</h1>
+    <p style="font-size: 0.95rem;">Generate batches of secure access codes, track activations, and export in CSV/TXT formats.</p>
+  </div>
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.export_codes', format_type='csv', status=filter_status, batch_id=batch_filter) }}" class="btn btn-emerald">
+      📥 Download as CSV
+    </a>
+    <a href="{{ url_for('admin.export_codes', format_type='txt', status=filter_status, batch_id=batch_filter) }}" class="btn btn-secondary">
+      📄 Download as TXT
+    </a>
+  </div>
+</div>
+
+<!-- Code Generation Card -->
+<div class="card" style="margin-bottom: 2rem; border-color: rgba(99, 102, 241, 0.4);">
+  <h3 class="card-title" style="margin-bottom: 1rem;">⚡ Batch Generate Access Codes</h3>
+  
+  <form method="POST" action="{{ url_for('admin.codes') }}">
+    <input type="hidden" name="action" value="generate">
+
+    <div class="grid grid-cols-3" style="gap: 1.25rem; align-items: flex-end;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" for="count">Quantity to Generate</label>
+        <select id="count" name="count" class="form-control">
+          <option value="10">10 Codes</option>
+          <option value="25">25 Codes</option>
+          <option value="50" selected>50 Codes</option>
+          <option value="100">100 Codes</option>
+          <option value="250">250 Codes</option>
+          <option value="500">500 Codes</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" for="prefix">Code Prefix</label>
+        <input type="text" id="prefix" name="prefix" value="QP" class="form-control" placeholder="e.g. QP, VIP, PRO" maxlength="6" style="text-transform: uppercase;">
+      </div>
+
+      <div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          ✨ Generate Batch &rarr;
+        </button>
+      </div>
+    </div>
+    <div class="form-text" style="margin-top: 0.75rem;">
+      Each generated code grants 1 new user activation valued at <strong>{{ economy.x_price|currency }}</strong>.
+    </div>
+  </form>
+</div>
+
+<!-- Filter & Search Bar -->
+<div class="card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+  <form method="GET" action="{{ url_for('admin.codes') }}" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 200px;">
+      <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="Search by access code...">
+    </div>
+
+    <div>
+      <select name="status" class="form-control" onchange="this.form.submit()">
+        <option value="all" {% if filter_status == 'all' %}selected{% endif %}>All Statuses</option>
+        <option value="unused" {% if filter_status == 'unused' %}selected{% endif %}>Available (Unused)</option>
+        <option value="used" {% if filter_status == 'used' %}selected{% endif %}>Activated (Used)</option>
+      </select>
+    </div>
+
+    {% if batches %}
+    <div>
+      <select name="batch_id" class="form-control" onchange="this.form.submit()">
+        <option value="">All Batches</option>
+        {% for b in batches %}
+          <option value="{{ b }}" {% if batch_filter == b %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    {% if search or filter_status != 'all' or batch_filter %}
+      <a href="{{ url_for('admin.codes') }}" class="btn btn-sm btn-secondary" title="Reset Filters">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Code Inventory Table -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">📋 Code Inventory</h3>
+    <span class="badge badge-indigo">Showing up to 200 records</span>
+  </div>
+
+  {% if codes %}
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Access Code</th>
+            <th>Status</th>
+            <th>Batch ID</th>
+            <th>Created Date</th>
+            <th>Activated By</th>
+            <th>Activated Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in codes %}
+          <tr>
+            <td>
+              <span style="font-family: monospace; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: 0.05em;">
+                {{ c.code }}
+              </span>
+            </td>
+            <td>
+              {% if c.is_used %}
+                <span class="badge badge-rose">Used</span>
+              {% else %}
+                <span class="badge badge-emerald">Available</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.8rem; font-family: monospace; color: var(--text-muted);">
+              {{ c.batch_id or 'Manual' }}
+            </td>
+            <td style="font-size: 0.8rem;">
+              {{ c.created_at|datetimeformat('%b %d, %Y') }}
+            </td>
+            <td>
+              {% if c.used_by %}
+                <span style="font-weight: 600; color: var(--text-primary);">@{{ c.used_by.username }}</span>
+              {% else %}
+                <span style="color: var(--text-muted);">&mdash;</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.8rem;">
+              {% if c.used_at %}
+                {{ c.used_at|datetimeformat('%b %d, %Y • %I:%M %p') }}
+              {% else %}
+                <span style="color: var(--text-muted);">&mdash;</span>
+              {% endif %}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-secondary" onclick="copyToClipboard('{{ c.code }}', this)" title="Copy Code">
+                📋 Copy
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+      No access codes match your filter criteria. Generate a new batch above!
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

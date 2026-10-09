@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Log In - QuestPlatform{% endblock %}
+
+{% block content %}
+<div style="max-width: 440px; margin: 2rem auto;">
+  <div class="card" style="box-shadow: var(--shadow-glow);">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div class="brand-icon" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.5rem;">⚔️</div>
+      <h2 style="font-size: 1.5rem; margin-bottom: 0.35rem;">Welcome Back</h2>
+      <p style="font-size: 0.9rem;">Sign in to continue completing quests and earning rewards.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="e.g. shadow_quester" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+          <label class="form-label" for="password" style="margin-bottom: 0;">Password</label>
+        </div>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="remember" name="remember" style="accent-color: var(--accent-primary); width: 16px; height: 16px;">
+        <label for="remember" style="font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">Remember me on this device</label>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+        Sign In &rarr;
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.875rem;">
+      Don't have an account? 
+      <a href="{{ url_for('auth.register') }}" style="color: #a5b4fc; font-weight: 600;">Create Account with Access Code</a>
+    </div>
+  </div>
+
+  {% include 'ads/ad_unit.html' %}
+</div>
+{% endblock %}

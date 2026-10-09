@@ -1,0 +1,121 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Friday Payouts Management - QuestPlatform Admin{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">💳 Friday Payouts Center</h1>
+    <p style="font-size: 0.95rem;">Review, execute, and export bank transfer payouts for qualified members.</p>
+  </div>
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.export_withdrawals_csv', pending_only='true') }}" class="btn btn-emerald">
+      📥 Export Pending Payouts CSV
+    </a>
+    <a href="{{ url_for('admin.export_withdrawals_csv', pending_only='false') }}" class="btn btn-secondary">
+      📑 Export All History CSV
+    </a>
+  </div>
+</div>
+
+<!-- Status Filters -->
+<div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+  <a href="{{ url_for('admin.withdrawals', status='pending') }}" class="btn btn-sm {% if filter_status == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">
+    ⏳ Pending Payouts ({{ pending_count }})
+  </a>
+  <a href="{{ url_for('admin.withdrawals', status='paid') }}" class="btn btn-sm {% if filter_status == 'paid' %}btn-primary{% else %}btn-secondary{% endif %}">
+    ✓ Completed (Paid)
+  </a>
+  <a href="{{ url_for('admin.withdrawals', status='rejected') }}" class="btn btn-sm {% if filter_status == 'rejected' %}btn-primary{% else %}btn-secondary{% endif %}">
+    ✕ Rejected
+  </a>
+</div>
+
+<!-- Withdrawals Table -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">📋 Withdrawal Requests</h3>
+    <span class="badge badge-indigo">{{ withdrawals|length }} Records</span>
+  </div>
+
+  {% if withdrawals %}
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Quester</th>
+            <th>Amount</th>
+            <th>Bank & Account Details</th>
+            <th>Status</th>
+            <th>Requested Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for w in withdrawals %}
+          <tr>
+            <td style="font-family: monospace; font-weight: 700;">#W-{{ w.id }}</td>
+            <td style="font-weight: 600; color: var(--text-primary);">
+              @{{ w.user.username }}
+            </td>
+            <td style="font-weight: 800; color: #34d399; font-size: 1.05rem;">
+              {{ w.amount|currency }}
+            </td>
+            <td>
+              <div style="font-weight: 700; color: #f8fafc;">{{ w.bank_name }}</div>
+              <div style="font-size: 0.85rem; font-family: monospace; color: #38bdf8;">{{ w.account_number }}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Name: {{ w.account_name }}</div>
+            </td>
+            <td>
+              {% if w.status == 'paid' %}
+                <span class="badge badge-emerald">✓ Paid</span>
+                {% if w.admin_notes %}
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Ref: {{ w.admin_notes }}</div>
+                {% endif %}
+              {% elif w.status == 'rejected' %}
+                <span class="badge badge-rose">✕ Rejected</span>
+                {% if w.admin_notes %}
+                  <div style="font-size: 0.75rem; color: #fda4af; margin-top: 0.2rem;">{{ w.admin_notes }}</div>
+                {% endif %}
+              {% else %}
+                <span class="badge badge-amber">⏳ Pending</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.825rem;">
+              {{ w.created_at|datetimeformat }}
+            </td>
+            <td>
+              {% if w.status == 'pending' %}
+                <div style="display: flex; gap: 0.35rem;">
+                  <!-- Mark Paid Form -->
+                  <form method="POST" action="{{ url_for('admin.pay_withdrawal', withdrawal_id=w.id) }}" onsubmit="return confirm('Confirm marking payout #W-{{ w.id }} as PAID?');">
+                    <button type="submit" class="btn btn-sm btn-emerald" title="Mark as Paid">
+                      ✓ Mark Paid
+                    </button>
+                  </form>
+
+                  <!-- Reject Form -->
+                  <form method="POST" action="{{ url_for('admin.reject_withdrawal', withdrawal_id=w.id) }}" onsubmit="return confirm('Reject and refund {{ w.amount|currency }} back to @{{ w.user.username }}\'s wallet?');">
+                    <input type="hidden" name="reason" value="Invalid account details or failed transfer">
+                    <button type="submit" class="btn btn-sm btn-danger" title="Reject & Refund">
+                      ✕ Reject & Refund
+                    </button>
+                  </form>
+                </div>
+              {% else %}
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Processed</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+      No withdrawal requests found for this filter.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

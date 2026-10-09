@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Leaderboard - QuestPlatform{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2.5rem;">
+  <div class="badge badge-amber" style="margin-bottom: 0.75rem; font-size: 0.8rem; padding: 0.35rem 0.85rem;">
+    🏆 Hall of Fame
+  </div>
+  <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">QuestPlatform Leaderboard</h1>
+  <p style="font-size: 1rem; color: #94a3b8; max-width: 600px; margin: 0 auto;">
+    Top performing questers and top referral champions earning the highest daily commissions.
+  </p>
+</div>
+
+<!-- Podium for Top 3 Referrers -->
+{% if top_referrers|length >= 3 %}
+<div style="display: flex; justify-content: center; align-items: flex-end; gap: 1.5rem; margin-bottom: 3rem; flex-wrap: wrap;">
+  
+  <!-- #2 Silver -->
+  <div class="card" style="width: 240px; text-align: center; padding: 1.5rem 1rem; border-color: rgba(255,255,255,0.25); background: linear-gradient(180deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%); order: 1;">
+    <div style="font-size: 2.5rem; margin-bottom: 0.25rem;">🥈</div>
+    <div class="badge" style="background: rgba(255,255,255,0.15); color: #fff; margin-bottom: 0.5rem;">Rank #2</div>
+    <h3 style="font-size: 1.1rem; margin-bottom: 0.25rem;">@{{ top_referrers[1].username }}</h3>
+    <div style="font-size: 1.25rem; font-weight: 800; color: #34d399; font-family: var(--font-display);">
+      {{ top_referrers[1].referral_earnings|currency }}
+    </div>
+    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">{{ top_referrers[1].tier1_count }} direct recruits</div>
+  </div>
+
+  <!-- #1 Gold (Taller, Glowing) -->
+  <div class="card" style="width: 260px; text-align: center; padding: 2rem 1.25rem; border-color: rgba(245,158,11,0.5); box-shadow: 0 0 25px rgba(245,158,11,0.25); background: linear-gradient(180deg, rgba(245,158,11,0.12) 0%, rgba(15,23,42,0.95) 100%); order: 2;">
+    <div style="font-size: 3.5rem; margin-bottom: 0.25rem;">👑</div>
+    <div class="badge badge-amber" style="font-size: 0.8rem; margin-bottom: 0.5rem;">Champion #1</div>
+    <h3 style="font-size: 1.25rem; margin-bottom: 0.25rem; color: #fbbf24;">@{{ top_referrers[0].username }}</h3>
+    <div style="font-size: 1.5rem; font-weight: 900; color: #34d399; font-family: var(--font-display);">
+      {{ top_referrers[0].referral_earnings|currency }}
+    </div>
+    <div style="font-size: 0.85rem; color: #fbbf24; font-weight: 600; margin-top: 0.25rem;">{{ top_referrers[0].tier1_count }} direct recruits</div>
+  </div>
+
+  <!-- #3 Bronze -->
+  <div class="card" style="width: 240px; text-align: center; padding: 1.5rem 1rem; border-color: rgba(217,119,6,0.3); background: linear-gradient(180deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%); order: 3;">
+    <div style="font-size: 2.5rem; margin-bottom: 0.25rem;">🥉</div>
+    <div class="badge badge-amber" style="background: rgba(217,119,6,0.2); color: #f59e0b; margin-bottom: 0.5rem;">Rank #3</div>
+    <h3 style="font-size: 1.1rem; margin-bottom: 0.25rem;">@{{ top_referrers[2].username }}</h3>
+    <div style="font-size: 1.25rem; font-weight: 800; color: #34d399; font-family: var(--font-display);">
+      {{ top_referrers[2].referral_earnings|currency }}
+    </div>
+    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">{{ top_referrers[2].tier1_count }} direct recruits</div>
+  </div>
+
+</div>
+{% endif %}
+
+<!-- Full Leaderboard Tables -->
+<div class="grid grid-cols-2" style="gap: 2rem; margin-bottom: 2rem;">
+  
+  <!-- Top Referrers Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">👥 Top Referral Champions</h3>
+      <span class="badge badge-indigo">All Time</span>
+    </div>
+
+    {% if top_referrers %}
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>User</th>
+              <th>Direct Recruits</th>
+              <th>Referral Earnings</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in top_referrers %}
+            <tr>
+              <td>
+                {% if loop.index == 1 %}
+                  <span class="badge badge-amber">🥇 #1</span>
+                {% elif loop.index == 2 %}
+                  <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff;">🥈 #2</span>
+                {% elif loop.index == 3 %}
+                  <span class="badge badge-indigo">🥉 #3</span>
+                {% else %}
+                  <span style="font-weight: 700; color: var(--text-muted);">#{{ loop.index }}</span>
+                {% endif %}
+              </td>
+              <td style="font-weight: 600; color: var(--text-primary);">
+                @{{ u.username }}
+              </td>
+              <td>
+                <span class="badge badge-emerald">{{ u.tier1_count }}</span>
+              </td>
+              <td style="font-weight: 700; color: #34d399;">
+                {{ u.referral_earnings|currency }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="text-align: center; padding: 2rem; color: var(--text-muted);">No referrers yet. Start referring to claim the #1 spot!</p>
+    {% endif %}
+  </div>
+
+  <!-- Top Questers Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">🎯 Top Quest Completers</h3>
+      <span class="badge badge-emerald">Verified</span>
+    </div>
+
+    {% if top_questers %}
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>User</th>
+              <th>Quests Done</th>
+              <th>Total Earned</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in top_questers %}
+            <tr>
+              <td>
+                {% if loop.index == 1 %}
+                  <span class="badge badge-amber">🥇 #1</span>
+                {% elif loop.index == 2 %}
+                  <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff;">🥈 #2</span>
+                {% elif loop.index == 3 %}
+                  <span class="badge badge-indigo">🥉 #3</span>
+                {% else %}
+                  <span style="font-weight: 700; color: var(--text-muted);">#{{ loop.index }}</span>
+                {% endif %}
+              </td>
+              <td style="font-weight: 600; color: var(--text-primary);">
+                @{{ u.username }}
+              </td>
+              <td>
+                <span class="badge badge-indigo">{{ u.tasks_completed_count }}</span>
+              </td>
+              <td style="font-weight: 700; color: #34d399;">
+                {{ u.total_earned|currency }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="text-align: center; padding: 2rem; color: var(--text-muted);">No completed quests yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Ad Slot -->
+{% include 'ads/ad_unit.html' %}
+{% endblock %}

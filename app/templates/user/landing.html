@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}QuestPlatform - Complete Tasks, Refer Friends & Earn Rewards{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div style="text-align: center; padding: 3rem 1rem 4rem; max-width: 880px; margin: 0 auto;">
+  <div class="badge badge-indigo" style="margin-bottom: 1.25rem; font-size: 0.85rem; padding: 0.35rem 1rem;">
+    🚀 The #1 Gamified Quest & 2-Tier Referral Network
+  </div>
+  
+  <h1 style="font-size: clamp(2.2rem, 5vw, 3.75rem); font-weight: 900; letter-spacing: -0.03em; margin-bottom: 1.25rem;">
+    Perform Simple Tasks.<br>
+    <span class="gradient-text">Earn Real Cash Rewards.</span>
+  </h1>
+  
+  <p style="font-size: 1.15rem; max-width: 680px; margin: 0 auto 2rem; color: #94a3b8;">
+    Complete quick web quests, build an automated 2-tier referral network with huge commissions, and withdraw your funds directly to your bank account every Friday.
+  </p>
+
+  <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+    <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-primary">
+      ⚔️ Get Started with Access Code
+    </a>
+    <a href="{{ url_for('main.rules') }}" class="btn btn-lg btn-secondary">
+      📖 View How It Works
+    </a>
+  </div>
+
+  <div style="margin-top: 2.5rem; display: flex; align-items: center; justify-content: center; gap: 2.5rem; flex-wrap: wrap; color: #64748b; font-size: 0.9rem;">
+    <div>⚡ <strong>{{ economy.task_reward|currency }}</strong> / Completed Quest</div>
+    <div>👥 <strong>{{ economy.tier1_reward|currency }}</strong> Tier-1 Direct Bonus (20%)</div>
+    <div>🌐 <strong>{{ economy.tier2_reward|currency }}</strong> Tier-2 Downline Bonus (5%)</div>
+    <div>📅 <strong>Friday</strong> Guaranteed Payouts</div>
+  </div>
+</div>
+
+<!-- Strategic Ad Slot 1 -->
+{% include 'ads/ad_unit.html' %}
+
+<!-- Key Feature Cards -->
+<div class="grid grid-cols-3" style="margin: 3rem 0; gap: 1.5rem;">
+  <div class="card card-hoverable">
+    <div class="stat-icon indigo" style="margin-bottom: 1.25rem;">🎯</div>
+    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">1. Complete Daily Quests</h3>
+    <p style="font-size: 0.925rem;">
+      Click sponsored links, follow simple instructions, take a screenshot proof, and receive instant wallet credit upon admin verification.
+    </p>
+  </div>
+
+  <div class="card card-hoverable">
+    <div class="stat-icon emerald" style="margin-bottom: 1.25rem;">👥</div>
+    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">2. 2-Tier Referral Engine</h3>
+    <p style="font-size: 0.925rem;">
+      Earn <strong>{{ economy.tier1_reward|currency }} (20%)</strong> for every direct recruit, plus <strong>{{ economy.tier2_reward|currency }} (5%)</strong> when your recruits invite their friends!
+    </p>
+  </div>
+
+  <div class="card card-hoverable">
+    <div class="stat-icon amber" style="margin-bottom: 1.25rem;">💳</div>
+    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">3. Friday Bank Withdrawals</h3>
+    <p style="font-size: 0.925rem;">
+      Reach the 2X milestone from referrals, submit your bank details, and cash out straight to your bank account every Friday.
+    </p>
+  </div>
+</div>
+
+<!-- Platform Live Stats Counter -->
+<div class="card" style="margin: 3rem 0; background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%); border-color: var(--border-glow);">
+  <div class="grid grid-cols-4" style="text-align: center;">
+    <div>
+      <div style="font-size: 2.2rem; font-weight: 800; color: #818cf8; font-family: var(--font-display);">{{ total_users_count + 120 }}+</div>
+      <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Active Questers</div>
+    </div>
+    <div>
+      <div style="font-size: 2.2rem; font-weight: 800; color: #34d399; font-family: var(--font-display);">{{ recent_tasks_count }}</div>
+      <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Live Quests</div>
+    </div>
+    <div>
+      <div style="font-size: 2.2rem; font-weight: 800; color: #fbbf24; font-family: var(--font-display);">2-Tier</div>
+      <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Passive Rewards</div>
+    </div>
+    <div>
+      <div style="font-size: 2.2rem; font-weight: 800; color: #c084fc; font-family: var(--font-display);">100%</div>
+      <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Friday Payout Rate</div>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard Preview -->
+{% if top_referrers %}
+<div class="card" style="margin: 3rem 0;">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">🏆 Top Platform Earners</h3>
+      <p class="card-subtitle">Highest referral commissions on QuestPlatform</p>
+    </div>
+    <a href="{{ url_for('main.leaderboard') }}" class="btn btn-sm btn-outline-primary">View Full Leaderboard &rarr;</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="custom-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Quester</th>
+          <th>Direct Referrals</th>
+          <th>Total Earned</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for leader in top_referrers %}
+        <tr>
+          <td>
+            {% if loop.index == 1 %}
+              <span class="badge badge-amber" style="font-size: 0.8rem;">🥇 #1</span>
+            {% elif loop.index == 2 %}
+              <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff;">🥈 #2</span>
+            {% elif loop.index == 3 %}
+              <span class="badge badge-indigo">🥉 #3</span>
+            {% else %}
+              <span style="font-weight: 700; color: var(--text-muted);">#{{ loop.index }}</span>
+            {% endif %}
+          </td>
+          <td style="font-weight: 600; color: var(--text-primary);">
+            @{{ leader.username }}
+          </td>
+          <td>
+            <span class="badge badge-emerald">{{ leader.tier1_count }} recruits</span>
+          </td>
+          <td style="font-weight: 700; color: #34d399;">
+            {{ leader.total_earned|currency }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Call to Action Banner -->
+<div class="card" style="text-align: center; padding: 3rem 1.5rem; background: var(--gradient-card); border-color: rgba(99, 102, 241, 0.4); margin-bottom: 2rem;">
+  <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">Ready to Start Your Quest?</h2>
+  <p style="max-width: 540px; margin: 0 auto 1.5rem; font-size: 1rem;">
+    Grab an access code, activate your account in under 30 seconds, and start collecting rewards today.
+  </p>
+  <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-emerald">
+    Join QuestPlatform Now &rarr;
+  </a>
+</div>
+{% endblock %}

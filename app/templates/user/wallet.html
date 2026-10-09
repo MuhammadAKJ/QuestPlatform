@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}Wallet & Cashout - QuestPlatform{% endblock %}
+
+{% block content %}
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">💳 Wallet & Payouts</h1>
+    <p style="font-size: 0.95rem;">Manage your earnings, check Friday payout qualification, and withdraw directly to your bank.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="{{ url_for('main.profile') }}" class="btn btn-secondary">
+      ⚙️ Bank Payout Settings
+    </a>
+  </div>
+</div>
+
+<!-- Wallet Balances Header -->
+<div class="grid grid-cols-3" style="margin-bottom: 2rem;">
+  <div class="card stat-card">
+    <div class="stat-icon emerald">💵</div>
+    <div class="stat-content">
+      <div class="stat-label">Available for Cashout</div>
+      <div class="stat-value" style="color: #34d399;">{{ current_user.wallet_balance|currency }}</div>
+      <div class="stat-sub">Ready for Friday withdrawal</div>
+    </div>
+  </div>
+
+  <div class="card stat-card">
+    <div class="stat-icon indigo">👥</div>
+    <div class="stat-content">
+      <div class="stat-label">Referral Earnings</div>
+      <div class="stat-value" style="color: #818cf8;">{{ current_user.referral_earnings|currency }}</div>
+      <div class="stat-sub">2X Milestone: {{ economy.min_withdrawal|currency }}</div>
+    </div>
+  </div>
+
+  <div class="card stat-card">
+    <div class="stat-icon purple">💎</div>
+    <div class="stat-content">
+      <div class="stat-label">Lifetime Earned</div>
+      <div class="stat-value" style="color: #c084fc;">{{ current_user.total_earned|currency }}</div>
+      <div class="stat-sub">All quests + referrals</div>
+    </div>
+  </div>
+</div>
+
+<!-- Friday Cashout Request Card -->
+<div class="card" style="margin-bottom: 2rem; border-color: {% if withdrawal_qualified and can_withdraw_today %}var(--border-accent){% else %}var(--border-color){% endif %};">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">
+        📅 Friday Cashout Request Window
+      </h3>
+      <p class="card-subtitle">
+        Withdrawals are strictly processed on Fridays for users who have reached the 2X referral milestone.
+      </p>
+    </div>
+    <div>
+      {% if can_withdraw_today %}
+        <span class="badge badge-emerald" style="font-size: 0.8rem; padding: 0.35rem 0.85rem;">🟢 Window OPEN Today (Friday)</span>
+      {% else %}
+        <span class="badge badge-amber" style="font-size: 0.8rem; padding: 0.35rem 0.85rem;">🔒 Opens: {{ economy.next_friday_date }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2" style="gap: 2rem; align-items: start;">
+    
+    <!-- Payout Conditions & Status List -->
+    <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+      <div style="font-weight: 700; font-size: 0.95rem; color: #f8fafc; margin-bottom: 0.25rem;">Requirements Checklist:</div>
+      
+      <!-- Check 1: 2X Milestone -->
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: #fff;">1. 2X Referral Milestone ({{ economy.min_withdrawal|currency }})</div>
+          <div style="font-size: 0.775rem; color: var(--text-muted);">Current referral earnings: {{ current_user.referral_earnings|currency }}</div>
+        </div>
+        {% if withdrawal_qualified %}
+          <span class="badge badge-emerald">✓ Qualified</span>
+        {% else %}
+          <span class="badge badge-rose">✕ Need {{ (economy.min_withdrawal - current_user.referral_earnings)|currency }}</span>
+        {% endif %}
+      </div>
+
+      <!-- Check 2: Friday Window -->
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: #fff;">2. Friday Application Day</div>
+          <div style="font-size: 0.775rem; color: var(--text-muted);">Applications accepted Fridays (00:00 - 23:59 UTC)</div>
+        </div>
+        {% if can_withdraw_today %}
+          <span class="badge badge-emerald">✓ Active Today</span>
+        {% else %}
+          <span class="badge badge-amber">⏳ Opens Friday</span>
+        {% endif %}
+      </div>
+
+      <!-- Check 3: Bank Details -->
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: #fff;">3. Bank Payout Details</div>
+          <div style="font-size: 0.775rem; color: var(--text-muted);">
+            {% if current_user.has_payout_details %}
+              {{ current_user.bank_name }} • {{ current_user.account_number }} ({{ current_user.account_name }})
+            {% else %}
+              Not configured yet
+            {% endif %}
+          </div>
+        </div>
+        {% if current_user.has_payout_details %}
+          <span class="badge badge-emerald">✓ Configured</span>
+        {% else %}
+          <a href="{{ url_for('main.profile') }}" class="btn btn-sm btn-outline-primary">Add Bank Info</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Payout Form -->
+    <div>
+      {% if not current_user.has_payout_details %}
+        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); padding: 1.5rem; text-align: center;">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏦</div>
+          <h4 style="color: #fbbf24; margin-bottom: 0.35rem;">Bank Profile Incomplete</h4>
+          <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1rem;">
+            Please enter your Bank Name, Account Number, and Account Name in your profile to enable cashouts.
+          </p>
+          <a href="{{ url_for('main.profile') }}" class="btn btn-primary">Update Bank Details &rarr;</a>
+        </div>
+      {% elif not withdrawal_qualified %}
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 1.5rem; text-align: center;">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚀</div>
+          <h4 style="color: #a5b4fc; margin-bottom: 0.35rem;">Unlock 2X Milestone First</h4>
+          <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1rem;">
+            Accumulate <strong>{{ economy.min_withdrawal|currency }}</strong> from referrals to unlock your cashouts.
+          </p>
+          <a href="{{ url_for('main.referrals') }}" class="btn btn-primary">Go to Referral Hub &rarr;</a>
+        </div>
+      {% elif not can_withdraw_today %}
+        <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; text-align: center;">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">📅</div>
+          <h4 style="color: #f8fafc; margin-bottom: 0.35rem;">Payout Window Opens on Friday</h4>
+          <p style="font-size: 0.875rem; color: #94a3b8;">
+            You are fully qualified! The withdrawal submission window unlocks every Friday. Next payout day: <strong>{{ economy.next_friday_date }}</strong>.
+          </p>
+        </div>
+      {% else %}
+        <!-- Active Withdrawal Submission Form -->
+        <form method="POST" action="{{ url_for('main.wallet') }}">
+          <div class="form-group">
+            <label class="form-label" for="amount">Withdrawal Amount</label>
+            <div class="input-group">
+              <span style="display: flex; align-items: center; padding: 0 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-right: none; border-radius: var(--radius-md) 0 0 var(--radius-md); font-weight: 700; color: #34d399;">
+                {{ economy.currency_symbol }}
+              </span>
+              <input type="number" id="amount" name="amount" class="form-control" style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" step="0.01" min="1" max="{{ current_user.wallet_balance }}" value="{{ current_user.wallet_balance }}" required>
+            </div>
+            <div class="form-text">Available balance: <strong>{{ current_user.wallet_balance|currency }}</strong></div>
+          </div>
+
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1.25rem; font-size: 0.825rem; color: #34d399;">
+            ✓ Payout will be sent to: <strong>{{ current_user.bank_name }}</strong> • {{ current_user.account_number }} ({{ current_user.account_name }})
+          </div>
+
+          <button type="submit" class="btn btn-emerald" style="width: 100%;" {% if current_user.wallet_balance <= 0 %}disabled{% endif %}>
+            💰 Submit Friday Cashout Request
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<!-- Withdrawal Requests History -->
+<div class="card" style="margin-bottom: 2rem;">
+  <div class="card-header">
+    <h3 class="card-title">📑 Withdrawal Requests History</h3>
+  </div>
+
+  {% if withdrawals %}
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Amount</th>
+            <th>Destination Bank</th>
+            <th>Status</th>
+            <th>Date Requested</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for w in withdrawals %}
+          <tr>
+            <td style="font-weight: 700; font-family: monospace;">#W-{{ w.id }}</td>
+            <td style="font-weight: 800; color: #f8fafc; font-size: 0.95rem;">
+              {{ w.amount|currency }}
+            </td>
+            <td>
+              <div style="font-weight: 600; color: var(--text-primary);">{{ w.bank_name }}</div>
+              <div style="font-size: 0.775rem; color: var(--text-muted);">{{ w.account_number }} ({{ w.account_name }})</div>
+            </td>
+            <td>
+              {% if w.status == 'paid' %}
+                <span class="badge badge-emerald">✓ Paid Out</span>
+              {% elif w.status == 'rejected' %}
+                <span class="badge badge-rose" title="{{ w.admin_notes }}">✕ Rejected (Refunded)</span>
+              {% else %}
+                <span class="badge badge-amber">⏳ Pending Processing</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.825rem;">
+              {{ w.created_at|datetimeformat }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+      No withdrawal requests submitted yet.
+    </p>
+  {% endif %}
+</div>
+
+<!-- Complete Transaction History -->
+<div class="card" style="margin-bottom: 2rem;">
+  <div class="card-header">
+    <h3 class="card-title">📜 Complete Financial Ledger</h3>
+  </div>
+
+  {% if transactions %}
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td>
+              <span class="badge {% if 'referral' in tx.tx_type %}badge-indigo{% elif tx.tx_type == 'task_reward' %}badge-emerald{% elif tx.tx_type == 'withdrawal' %}badge-rose{% elif tx.tx_type == 'refund' %}badge-amber{% else %}badge-cyan{% endif %}">
+                {{ tx.tx_type|replace('_', ' ')|upper }}
+              </span>
+            </td>
+            <td style="font-weight: 500; color: var(--text-primary);">
+              {{ tx.description }}
+            </td>
+            <td style="font-weight: 800; color: {% if tx.amount > 0 %}#34d399{% else %}#fda4af{% endif %};">
+              {% if tx.amount > 0 %}+{% endif %}{{ tx.amount|currency }}
+            </td>
+            <td style="font-size: 0.825rem;">
+              {{ tx.created_at|datetimeformat }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+      No transactions recorded yet.
+    </p>
+  {% endif %}
+</div>
+
+<!-- Ad Slot -->
+{% include 'ads/ad_unit.html' %}
+{% endblock %}

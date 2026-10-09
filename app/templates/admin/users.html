@@ -1,0 +1,117 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}User Directory - QuestPlatform Admin{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">👥 User Directory</h1>
+    <p style="font-size: 0.95rem;">Manage registered members, view downline recruit counts, and manage account statuses.</p>
+  </div>
+</div>
+
+<!-- Search Bar -->
+<div class="card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+  <form method="GET" action="{{ url_for('admin.users') }}" style="display: flex; gap: 1rem;">
+    <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="Search by username or referral code...">
+    <button type="submit" class="btn btn-secondary">Search</button>
+    {% if search %}
+      <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-secondary">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">📋 Registered Questers</h3>
+    <span class="badge badge-indigo">{{ users|length }} Members</span>
+  </div>
+
+  {% if users %}
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Referral Code</th>
+            <th>Sponsor</th>
+            <th>Tier 1 (Direct)</th>
+            <th>Tier 2 (Downline)</th>
+            <th>Wallet Balance</th>
+            <th>Total Earned</th>
+            <th>Bank Info</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <div style="font-weight: 700; color: #f8fafc;">@{{ u.username }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Joined {{ u.created_at|datetimeformat('%b %d, %Y') }}</div>
+            </td>
+            <td>
+              <span style="font-family: monospace; font-size: 0.85rem; color: #818cf8;">{{ u.referral_code }}</span>
+            </td>
+            <td>
+              {% if u.sponsor %}
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">@{{ u.sponsor.username }}</span>
+              {% else %}
+                <span style="font-size: 0.8rem; color: var(--text-muted);">&mdash;</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge badge-indigo">{{ u.tier1_count }}</span>
+            </td>
+            <td>
+              <span class="badge badge-cyan">{{ u.tier2_count }}</span>
+            </td>
+            <td style="font-weight: 700; color: #34d399;">
+              {{ u.wallet_balance|currency }}
+            </td>
+            <td style="font-weight: 700; color: #c084fc;">
+              {{ u.total_earned|currency }}
+            </td>
+            <td>
+              {% if u.has_payout_details %}
+                <span class="badge badge-emerald" title="{{ u.bank_name }} - {{ u.account_number }} ({{ u.account_name }})">
+                  ✓ Configured
+                </span>
+              {% else %}
+                <span class="badge" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">
+                  Not Set
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u.is_active %}
+                <span class="badge badge-emerald">Active</span>
+              {% else %}
+                <span class="badge badge-rose">Banned</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u.id != current_user.id %}
+                <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=u.id) }}">
+                  <button type="submit" class="btn btn-sm {% if u.is_active %}btn-danger{% else %}btn-emerald{% endif %}" title="Toggle Active/Banned">
+                    {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+                  </button>
+                </form>
+              {% else %}
+                <span class="badge badge-purple">You (Admin)</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+      No users found matching your search.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

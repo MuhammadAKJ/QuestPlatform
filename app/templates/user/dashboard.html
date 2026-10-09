@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - QuestPlatform{% endblock %}
+
+{% block content %}
+<!-- Welcome & Quick Status Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">
+      Hello, <span class="gradient-text">@{{ current_user.username }}</span> 👋
+    </h1>
+    <p style="font-size: 0.95rem;">Here is your quest summary, 2-tier network growth, and earnings status.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="{{ url_for('main.quests') }}" class="btn btn-emerald">
+      🎯 Start Quests
+    </a>
+    <a href="{{ url_for('main.wallet') }}" class="btn btn-secondary">
+      💳 Wallet & Cashout
+    </a>
+  </div>
+</div>
+
+<!-- Financial KPI Cards -->
+<div class="grid grid-cols-4" style="margin-bottom: 1.75rem;">
+  <!-- Available Balance -->
+  <div class="card stat-card">
+    <div class="stat-icon emerald">💳</div>
+    <div class="stat-content">
+      <div class="stat-label">Available Balance</div>
+      <div class="stat-value" style="color: #34d399;">{{ current_user.wallet_balance|currency }}</div>
+      <div class="stat-sub">Ready for Friday payout</div>
+    </div>
+  </div>
+
+  <!-- Referral Earnings -->
+  <div class="card stat-card">
+    <div class="stat-icon indigo">👥</div>
+    <div class="stat-content">
+      <div class="stat-label">Referral Earnings</div>
+      <div class="stat-value" style="color: #818cf8;">{{ current_user.referral_earnings|currency }}</div>
+      <div class="stat-sub">Tier 1 + Tier 2 commissions</div>
+    </div>
+  </div>
+
+  <!-- Quests Completed -->
+  <div class="card stat-card">
+    <div class="stat-icon amber">🎯</div>
+    <div class="stat-content">
+      <div class="stat-label">Quests Completed</div>
+      <div class="stat-value" style="color: #fbbf24;">{{ current_user.tasks_completed_count }}</div>
+      <div class="stat-sub">Verified & approved</div>
+    </div>
+  </div>
+
+  <!-- Total Lifetime Earned -->
+  <div class="card stat-card">
+    <div class="stat-icon purple">💎</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Earned</div>
+      <div class="stat-value" style="color: #c084fc;">{{ current_user.total_earned|currency }}</div>
+      <div class="stat-sub">All-time platform income</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2X Referral Milestone & Withdrawal Qualification Meter -->
+<div class="card" style="margin-bottom: 2rem; border-color: {% if withdrawal_qualified %}var(--border-accent){% else %}rgba(99, 102, 241, 0.3){% endif %};">
+  <div class="card-header" style="margin-bottom: 0.75rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <h3 class="card-title">🚀 2X Referral Withdrawal Qualification</h3>
+        {% if withdrawal_qualified %}
+          <span class="badge badge-emerald">✓ Unlocked & Qualified</span>
+        {% else %}
+          <span class="badge badge-amber">In Progress ({{ progress_pct }}%)</span>
+        {% endif %}
+      </div>
+      <p class="card-subtitle">
+        Requirement: Accumulate at least <strong>{{ economy.min_withdrawal|currency }}</strong> (2X Base Price) from referrals to unlock weekly Friday cashouts.
+      </p>
+    </div>
+    <div style="text-align: right;">
+      <span style="font-size: 1.1rem; font-weight: 800; color: {% if withdrawal_qualified %}#34d399{% else %}#fbbf24{% endif %};">
+        {{ current_user.referral_earnings|currency }} / {{ economy.min_withdrawal|currency }}
+      </span>
+    </div>
+  </div>
+
+  <div class="progress-container" style="height: 14px; margin-bottom: 0.75rem;">
+    <div class="progress-bar {% if not withdrawal_qualified %}progress-bar-indigo{% endif %}" style="width: {{ progress_pct }}%;"></div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+    {% if withdrawal_qualified %}
+      <span style="color: #34d399; font-weight: 600;">
+        🎉 Congratulations! You have met the 2X milestone. You can request withdrawals every Friday.
+      </span>
+      <a href="{{ url_for('main.wallet') }}" class="btn btn-sm btn-emerald">Go to Cashout &rarr;</a>
+    {% else %}
+      <span>
+        You need <strong>{{ (economy.min_withdrawal - current_user.referral_earnings)|currency }}</strong> more in referral commissions to qualify.
+      </span>
+      <a href="{{ url_for('main.referrals') }}" class="btn btn-sm btn-outline-primary">Invite Friends & Boost Progress &rarr;</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Two-Column Layout: Referral Hub Card + Active Quests -->
+<div class="grid grid-cols-2" style="gap: 1.5rem; margin-bottom: 2rem;">
+  
+  <!-- 2-Tier Referral Network Card (Strictly Tier 1 count and Tier 2 count) -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">👥 Your 2-Tier Referral Network</h3>
+        <p class="card-subtitle">Only direct recruits and second tier recruit counts are visible</p>
+      </div>
+      <a href="{{ url_for('main.referrals') }}" class="btn btn-sm btn-secondary">Full Hub</a>
+    </div>
+
+    <!-- Tier Breakdown Badges -->
+    <div class="grid grid-cols-2" style="gap: 1rem; margin-bottom: 1.25rem;">
+      <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 1rem; text-align: center;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase;">Direct Referrals (Tier 1)</div>
+        <div style="font-size: 2rem; font-weight: 900; color: #818cf8; font-family: var(--font-display); margin: 0.2rem 0;">
+          {{ tier1_count }}
+        </div>
+        <div style="font-size: 0.775rem; color: #94a3b8;">Earn {{ economy.tier1_reward|currency }} each (20%)</div>
+      </div>
+
+      <div style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: var(--radius-md); padding: 1rem; text-align: center;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: #67e8f9; text-transform: uppercase;">2nd Tier Downline (Tier 2)</div>
+        <div style="font-size: 2rem; font-weight: 900; color: #06b6d4; font-family: var(--font-display); margin: 0.2rem 0;">
+          {{ tier2_count }}
+        </div>
+        <div style="font-size: 0.775rem; color: #94a3b8;">Earn {{ economy.tier2_reward|currency }} each (5%)</div>
+      </div>
+    </div>
+
+    <!-- Quick Share Referral Link Box -->
+    <div class="form-group" style="margin-bottom: 1rem;">
+      <label class="form-label" style="font-size: 0.85rem;">Your Exclusive Referral Link</label>
+      <div class="input-group">
+        <input type="text" id="referral-link-input" class="form-control" value="{{ request.host_url.rstrip('/') }}/register?ref={{ current_user.referral_code }}" readonly style="font-size: 0.85rem; font-family: monospace;">
+        <button class="btn btn-primary" onclick="copyToClipboard(document.getElementById('referral-link-input').value, this)">
+          📋 Copy
+        </button>
+      </div>
+    </div>
+
+    <!-- Social Share Buttons -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="https://api.whatsapp.com/send?text=Join%20QuestPlatform%20and%20earn%20cash%20with%20me!%20Register%20with%20code:%20{{ current_user.referral_code }}%20{{ request.host_url.rstrip('/') }}/register?ref={{ current_user.referral_code }}" target="_blank" class="btn btn-sm btn-secondary" style="background: #075e54; color: #fff; border: none;">
+        💬 WhatsApp
+      </a>
+      <a href="https://t.me/share/url?url={{ request.host_url.rstrip('/') }}/register?ref={{ current_user.referral_code }}&text=Earn%20cash%20completing%20quests%20on%20QuestPlatform!" target="_blank" class="btn btn-sm btn-secondary" style="background: #229ed9; color: #fff; border: none;">
+        ✈️ Telegram
+      </a>
+      <a href="https://twitter.com/intent/tweet?text=Join%20QuestPlatform%20and%20earn%20cash!%20Sign%20up%20using%20my%20link:&url={{ request.host_url.rstrip('/') }}/register?ref={{ current_user.referral_code }}" target="_blank" class="btn btn-sm btn-secondary" style="background: #1da1f2; color: #fff; border: none;">
+        🐦 X (Twitter)
+      </a>
+    </div>
+  </div>
+
+  <!-- Available Quests Shortcut -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">🎯 Live Quests</h3>
+        <p class="card-subtitle">Complete simple tasks and upload screenshot proof</p>
+      </div>
+      <a href="{{ url_for('main.quests') }}" class="btn btn-sm btn-outline-primary">View All &rarr;</a>
+    </div>
+
+    {% if available_tasks %}
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        {% for task in available_tasks %}
+          <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
+                <span class="badge badge-indigo" style="font-size: 0.65rem;">{{ task.category }}</span>
+                <span style="font-weight: 600; font-size: 0.925rem; color: #f8fafc;">{{ task.title }}</span>
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">
+                Reward: <strong style="color: #34d399;">{{ (task.reward_amount if task.reward_amount is not none else economy.task_reward)|currency }}</strong>
+              </div>
+            </div>
+            <a href="{{ url_for('main.quest_detail', task_id=task.id) }}" class="btn btn-sm btn-secondary">
+              Open Quest &rarr;
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎉</div>
+        <div style="font-weight: 600; color: var(--text-primary);">You're all caught up!</div>
+        <p style="font-size: 0.85rem; margin-top: 0.25rem;">You have completed all current active quests. Check back soon for new tasks.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Strategic Ad Unit -->
+{% include 'ads/ad_unit.html' %}
+
+<!-- Recent Activity Tables (2 columns: Recent Submissions & Recent Transactions) -->
+<div class="grid grid-cols-2" style="gap: 1.5rem; margin-top: 2rem;">
+  
+  <!-- Recent Quest Submissions -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">📝 Recent Submissions</h3>
+      <a href="{{ url_for('main.quests') }}" class="btn btn-sm btn-secondary">Quests Hub</a>
+    </div>
+
+    {% if recent_submissions %}
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Quest</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in recent_submissions %}
+            <tr>
+              <td style="font-weight: 600; color: var(--text-primary);">
+                {{ sub.task.title }}
+              </td>
+              <td>
+                {% if sub.status == 'approved' %}
+                  <span class="badge badge-emerald">✓ Approved (+{{ sub.reward_paid|currency }})</span>
+                {% elif sub.status == 'rejected' %}
+                  <span class="badge badge-rose" title="{{ sub.rejection_reason }}">✕ Rejected</span>
+                {% else %}
+                  <span class="badge badge-amber">⏳ Pending Review</span>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.8rem;">
+                {{ sub.created_at|datetimeformat('%b %d, %I:%M %p') }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+        No quest submissions yet. <a href="{{ url_for('main.quests') }}">Start your first quest!</a>
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Recent Ledger Transactions -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">💰 Recent Transactions</h3>
+      <a href="{{ url_for('main.wallet') }}" class="btn btn-sm btn-secondary">All Transactions</a>
+    </div>
+
+    {% if recent_txs %}
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tx in recent_txs %}
+            <tr>
+              <td>
+                <div style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem;">{{ tx.description }}</div>
+                <span class="badge {% if 'referral' in tx.tx_type %}badge-indigo{% elif tx.tx_type == 'task_reward' %}badge-emerald{% elif tx.tx_type == 'withdrawal' %}badge-rose{% else %}badge-cyan{% endif %}" style="font-size: 0.65rem;">
+                  {{ tx.tx_type|replace('_', ' ')|upper }}
+                </span>
+              </td>
+              <td style="font-weight: 700; color: {% if tx.amount > 0 %}#34d399{% else %}#fda4af{% endif %};">
+                {% if tx.amount > 0 %}+{% endif %}{{ tx.amount|currency }}
+              </td>
+              <td style="font-size: 0.8rem;">
+                {{ tx.created_at|datetimeformat('%b %d, %I:%M %p') }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+        No transactions recorded yet.
+      </p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

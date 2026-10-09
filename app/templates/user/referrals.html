@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}2-Tier Referral Hub - QuestPlatform{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">👥 2-Tier Referral Hub</h1>
+    <p style="font-size: 0.95rem;">Build a recurring income network. Earn on your direct recruits and their downlines.</p>
+  </div>
+  <div class="badge badge-indigo" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+    Your Code: <strong style="color: #fff; margin-left: 0.25rem;">{{ current_user.referral_code }}</strong>
+  </div>
+</div>
+
+<!-- 2-Tier Cards: Exclusively displaying Tier 1 count and Tier 2 count -->
+<div class="grid grid-cols-2" style="gap: 1.5rem; margin-bottom: 2rem;">
+  
+  <!-- Tier 1 Card -->
+  <div class="card" style="border-color: rgba(99, 102, 241, 0.4); background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(99, 102, 241, 0.08) 100%);">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+      <span class="badge badge-indigo" style="font-size: 0.75rem;">Tier 1 • Direct Sponsor</span>
+      <span style="font-weight: 800; color: #818cf8; font-size: 1.25rem; font-family: var(--font-display);">
+        {{ economy.tier1_reward|currency }} / user (20%)
+      </span>
+    </div>
+
+    <div style="font-size: 0.825rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
+      Total Direct Recruits
+    </div>
+    <div style="font-size: 3rem; font-weight: 900; color: #f8fafc; font-family: var(--font-display); line-height: 1.1; margin: 0.25rem 0 0.75rem;">
+      {{ tier1_count }}
+    </div>
+    <p style="font-size: 0.875rem; color: #94a3b8;">
+      Users who registered using your direct referral link or code.
+    </p>
+  </div>
+
+  <!-- Tier 2 Card -->
+  <div class="card" style="border-color: rgba(6, 182, 212, 0.4); background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(6, 182, 212, 0.08) 100%);">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+      <span class="badge badge-cyan" style="font-size: 0.75rem;">Tier 2 • Downline Sponsor</span>
+      <span style="font-weight: 800; color: #06b6d4; font-size: 1.25rem; font-family: var(--font-display);">
+        {{ economy.tier2_reward|currency }} / user (5%)
+      </span>
+    </div>
+
+    <div style="font-size: 0.825rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
+      Total 2nd-Tier Recruits
+    </div>
+    <div style="font-size: 3rem; font-weight: 900; color: #f8fafc; font-family: var(--font-display); line-height: 1.1; margin: 0.25rem 0 0.75rem;">
+      {{ tier2_count }}
+    </div>
+    <p style="font-size: 0.875rem; color: #94a3b8;">
+      Users recruited by your direct referrals. Passive commission credited automatically!
+    </p>
+  </div>
+
+</div>
+
+<!-- Share Center Card -->
+<div class="card" style="margin-bottom: 2rem;">
+  <h3 class="card-title" style="margin-bottom: 1.25rem;">🚀 Share & Invite Friends</h3>
+
+  <div class="grid grid-cols-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Link copy -->
+    <div class="form-group" style="margin-bottom: 0;">
+      <label class="form-label">Your Referral Link</label>
+      <div class="input-group">
+        <input type="text" id="share-link-box" class="form-control" value="{{ share_url }}" readonly style="font-family: monospace; font-size: 0.875rem;">
+        <button class="btn btn-primary" onclick="copyToClipboard('{{ share_url }}', this)">
+          📋 Copy Link
+        </button>
+      </div>
+    </div>
+
+    <!-- Code copy -->
+    <div class="form-group" style="margin-bottom: 0;">
+      <label class="form-label">Your Referral Code</label>
+      <div class="input-group">
+        <input type="text" id="share-code-box" class="form-control" value="{{ current_user.referral_code }}" readonly style="font-family: monospace; font-weight: 700; letter-spacing: 0.05em;">
+        <button class="btn btn-secondary" onclick="copyToClipboard('{{ current_user.referral_code }}', this)">
+          📋 Copy Code
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Social Share One-Click Buttons -->
+  <label class="form-label" style="margin-bottom: 0.75rem;">Instant Social Sharing</label>
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="https://api.whatsapp.com/send?text={{ share_text|urlencode }}" target="_blank" class="btn btn-secondary" style="background: #075e54; color: #fff; border: none;">
+      💬 WhatsApp Share
+    </a>
+    <a href="https://t.me/share/url?url={{ share_url|urlencode }}&text=Earn%20cash%20completing%20quests%20on%20QuestPlatform!" target="_blank" class="btn btn-secondary" style="background: #229ed9; color: #fff; border: none;">
+      ✈️ Telegram Share
+    </a>
+    <a href="https://twitter.com/intent/tweet?text=Join%20QuestPlatform%20and%20earn%20cash!%20Register%20with%20code:%20{{ current_user.referral_code }}&url={{ share_url|urlencode }}" target="_blank" class="btn btn-secondary" style="background: #1da1f2; color: #fff; border: none;">
+      🐦 X (Twitter)
+    </a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|urlencode }}" target="_blank" class="btn btn-secondary" style="background: #1877f2; color: #fff; border: none;">
+      📘 Facebook Share
+    </a>
+    <button class="btn btn-secondary" onclick="openModal('qr-modal')">
+      📱 Show QR Code
+    </button>
+  </div>
+</div>
+
+<!-- QR Code Modal -->
+<div id="qr-modal" class="modal-backdrop">
+  <div class="modal-card" style="max-width: 380px; text-align: center;">
+    <div class="modal-header">
+      <h3 style="font-size: 1.1rem; color: #fff;">Scan to Join QuestPlatform</h3>
+      <button class="alert-close" onclick="closeModal('qr-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Scan this QR code with any phone camera to open your signup link instantly.
+      </p>
+      <div style="background: #ffffff; padding: 1.25rem; border-radius: var(--radius-md); display: inline-block; box-shadow: var(--shadow-md);">
+        <!-- Fast, reliable QR API -->
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ share_url|urlencode }}" alt="Referral QR Code" style="display: block; width: 200px; height: 200px;" />
+      </div>
+      <div style="font-weight: 700; color: var(--text-primary); margin-top: 1rem; font-family: monospace;">
+        Code: {{ current_user.referral_code }}
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content: center;">
+      <button class="btn btn-secondary" onclick="closeModal('qr-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Referral Earnings Ledger -->
+<div class="card" style="margin-bottom: 2rem;">
+  <div class="card-header">
+    <h3 class="card-title">💰 Referral Commission History</h3>
+    <span class="badge badge-emerald">Total Earned: {{ current_user.referral_earnings|currency }}</span>
+  </div>
+
+  {% if ref_transactions %}
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Commission Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in ref_transactions %}
+          <tr>
+            <td>
+              {% if tx.tx_type == 'tier1_referral' %}
+                <span class="badge badge-indigo">Tier 1 Direct (20%)</span>
+              {% else %}
+                <span class="badge badge-cyan">Tier 2 Downline (5%)</span>
+              {% endif %}
+            </td>
+            <td style="font-weight: 500; color: var(--text-primary);">
+              {{ tx.description }}
+            </td>
+            <td style="font-weight: 700; color: #34d399;">
+              +{{ tx.amount|currency }}
+            </td>
+            <td style="font-size: 0.825rem;">
+              {{ tx.created_at|datetimeformat }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👥</div>
+      <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">No Referral Commissions Yet</div>
+      <p style="font-size: 0.875rem;">Share your referral link with friends to start earning {{ economy.tier1_reward|currency }} on every signup!</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Ad Slot -->
+{% include 'ads/ad_unit.html' %}
+{% endblock %}

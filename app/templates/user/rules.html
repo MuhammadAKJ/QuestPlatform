@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Rules & Economics - QuestPlatform{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <div class="badge badge-indigo" style="margin-bottom: 0.75rem; font-size: 0.8rem; padding: 0.35rem 0.85rem;">
+      Platform Blueprint & Guidelines
+    </div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">How QuestPlatform Works</h1>
+    <p style="font-size: 1rem; color: #94a3b8;">
+      Complete transparency on task payouts, the 2-tier referral engine, and Friday cashout guidelines.
+    </p>
+  </div>
+
+  <!-- Economic Breakdown Table -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <h3 class="card-title" style="margin-bottom: 1rem;">💰 Platform Economic Distribution</h3>
+    <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1.25rem;">
+      Every new user joins with an authorized Access Code valued at <strong>{{ economy.x_price|currency }}</strong> ($X$).
+    </p>
+
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Reward Tier / Action</th>
+            <th>Formula</th>
+            <th>Payout Amount</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight: 700; color: #818cf8;">Direct Sponsor (Tier 1)</td>
+            <td style="font-family: monospace;">X / 5</td>
+            <td style="font-weight: 800; color: #34d399;">{{ economy.tier1_reward|currency }} (20%)</td>
+            <td>Paid instantly to the direct inviter when a new account is activated.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 700; color: #06b6d4;">2nd-Tier Sponsor (Tier 2)</td>
+            <td style="font-family: monospace;">X / 20</td>
+            <td style="font-weight: 800; color: #34d399;">{{ economy.tier2_reward|currency }} (5%)</td>
+            <td>Paid to the sponsor of the sponsor when downline members refer friends.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 700; color: #fbbf24;">Task / Quest Completion</td>
+            <td style="font-family: monospace;">X / 40</td>
+            <td style="font-weight: 800; color: #34d399;">{{ economy.task_reward|currency }} (2.5%)</td>
+            <td>Paid upon admin approval of verified screenshot proof.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 700; color: #a5b4fc;">Platform Maintenance & Pool</td>
+            <td style="font-family: monospace;">Remainder</td>
+            <td style="font-weight: 800; color: #f8fafc;">~75%</td>
+            <td>Covers operations, task sponsor pools, server infrastructure, and reserves.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Key Rules & Regulations Cards -->
+  <div class="grid grid-cols-2" style="gap: 1.5rem; margin-bottom: 2rem;">
+    
+    <div class="card">
+      <div class="stat-icon emerald" style="margin-bottom: 1rem;">🚀</div>
+      <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">1. The 2X Referral Milestone</h3>
+      <p style="font-size: 0.9rem; line-height: 1.6;">
+        To qualify for wallet withdrawals, users must accumulate at least <strong>{{ economy.min_withdrawal|currency }} (2X Base Price)</strong> in total referral earnings. Once unlocked, all funds (referral commissions + task earnings) can be cashed out.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="stat-icon amber" style="margin-bottom: 1rem;">📅</div>
+      <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">2. Friday Cashout Schedule</h3>
+      <p style="font-size: 0.9rem; line-height: 1.6;">
+        Withdrawal requests are processed exclusively on <strong>Fridays</strong>. Ensure your bank name, account number, and account name are up-to-date in your Profile prior to submitting.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="stat-icon indigo" style="margin-bottom: 1rem;">📸</div>
+      <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">3. Task Proof Requirements</h3>
+      <p style="font-size: 0.9rem; line-height: 1.6;">
+        Screenshots must be genuine, uncropped, and clearly demonstrate completed actions. Submitting duplicate or fraudulent screenshots will result in immediate task rejection.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="stat-icon purple" style="margin-bottom: 1rem;">🔒</div>
+      <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">4. Referral Privacy</h3>
+      <p style="font-size: 0.9rem; line-height: 1.6;">
+        In alignment with our network integrity standards, members can view only their aggregate direct referral count (Tier 1) and second tier referral count (Tier 2).
+      </p>
+    </div>
+
+  </div>
+
+  <!-- CTA -->
+  <div class="card" style="text-align: center; padding: 2.5rem 1.5rem; margin-bottom: 2rem;">
+    <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Ready to Begin?</h3>
+    <p style="font-size: 0.95rem; margin-bottom: 1.25rem;">Join thousands of questers earning rewards every day.</p>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-emerald">Get Started with Access Code &rarr;</a>
+  </div>
+
+  <!-- Ad Unit -->
+  {% include 'ads/ad_unit.html' %}
+</div>
+{% endblock %}

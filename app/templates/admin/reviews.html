@@ -1,0 +1,235 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Seamless Review Queue - QuestPlatform Admin{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">📝 Fast-Approval Review Queue</h1>
+    <p style="font-size: 0.95rem;">Seamlessly inspect proof screenshots, approve rewards with 1-click, or reject with preset reasons.</p>
+  </div>
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="{{ url_for('admin.reviews', status='pending') }}" class="btn btn-sm {% if filter_status == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">
+      ⏳ Pending ({{ pending_count }})
+    </a>
+    <a href="{{ url_for('admin.reviews', status='approved') }}" class="btn btn-sm {% if filter_status == 'approved' %}btn-primary{% else %}btn-secondary{% endif %}">
+      ✓ Approved
+    </a>
+    <a href="{{ url_for('admin.reviews', status='rejected') }}" class="btn btn-sm {% if filter_status == 'rejected' %}btn-primary{% else %}btn-secondary{% endif %}">
+      ✕ Rejected
+    </a>
+  </div>
+</div>
+
+<!-- Review Queue List -->
+{% if submissions %}
+  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    {% for sub in submissions %}
+      <div id="sub-card-{{ sub.id }}" class="card" style="border-color: {% if sub.status == 'pending' %}rgba(245, 158, 11, 0.4){% elif sub.status == 'approved' %}rgba(16, 185, 129, 0.3){% else %}rgba(244, 63, 94, 0.3){% endif %}; transition: all 0.3s ease;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+          
+          <!-- Screenshot Thumbnail Preview -->
+          <div style="flex-shrink: 0; text-align: center;">
+            <div style="position: relative; width: 140px; height: 140px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); cursor: pointer; background: #000;"
+                 onclick="openLightbox('{{ url_for('static', filename='uploads/proofs/' + sub.screenshot_path) }}', 'Proof from @{{ sub.user.username }} for &quot;{{ sub.task.title }}&quot;')">
+              <img src="{{ url_for('static', filename='uploads/proofs/' + sub.screenshot_path) }}" 
+                   alt="Proof" 
+                   style="width: 100%; height: 100%; object-fit: cover;" />
+              <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;"
+                   onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                <span style="font-size: 0.8rem; color: #fff; font-weight: 700; background: rgba(0,0,0,0.7); padding: 0.25rem 0.5rem; border-radius: 4px;">🔍 Zoom</span>
+              </div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">Click to enlarge</div>
+          </div>
+
+          <!-- Submission Metadata & Task Info -->
+          <div style="flex: 1; min-width: 260px;">
+            <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.35rem;">
+              <span class="badge badge-indigo">{{ sub.task.category }}</span>
+              <span style="font-weight: 700; color: #f8fafc; font-size: 1.1rem;">{{ sub.task.title }}</span>
+            </div>
+
+            <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 0.75rem;">
+              Submitted by <strong style="color: #38bdf8;">@{{ sub.user.username }}</strong> on {{ sub.created_at|datetimeformat }}
+            </div>
+
+            {% if sub.notes %}
+              <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                <strong>User Notes:</strong> {{ sub.notes }}
+              </div>
+            {% endif %}
+
+            <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.85rem;">
+              <div>Reward: <strong style="color: #34d399;">{{ (sub.task.reward_amount if sub.task.reward_amount is not none else economy.task_reward)|currency }}</strong></div>
+              <div>Target URL: <a href="{{ sub.task.url }}" target="_blank" rel="noopener noreferrer" style="color: #818cf8;">Open Link &rarr;</a></div>
+            </div>
+
+            {% if sub.status == 'rejected' and sub.rejection_reason %}
+              <div style="margin-top: 0.5rem; font-size: 0.825rem; color: #fda4af;">
+                <strong>Rejection Reason:</strong> {{ sub.rejection_reason }}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Seamless Action Buttons -->
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; min-width: 170px;">
+            {% if sub.status == 'pending' %}
+              <button type="button" class="btn btn-emerald" onclick="seamlessApprove({{ sub.id }}, this)">
+                ✓ 1-Click Approve
+              </button>
+              
+              <button type="button" class="btn btn-danger" onclick="openRejectDialog({{ sub.id }})">
+                ✕ Reject Proof
+              </button>
+            {% elif sub.status == 'approved' %}
+              <span class="badge badge-emerald" style="padding: 0.5rem; justify-content: center;">
+                ✓ Approved (+{{ sub.reward_paid|currency }})
+              </span>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                {{ sub.reviewed_at|datetimeformat('%b %d, %I:%M %p') }}
+              </div>
+            {% else %}
+              <span class="badge badge-rose" style="padding: 0.5rem; justify-content: center;">
+                ✕ Rejected
+              </span>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                {{ sub.reviewed_at|datetimeformat('%b %d, %I:%M %p') }}
+              </div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card" style="text-align: center; padding: 4rem 1.5rem;">
+    <div style="font-size: 3rem; margin-bottom: 0.75rem;">🎉</div>
+    <h3 style="font-size: 1.4rem; margin-bottom: 0.35rem;">Review Queue is Empty</h3>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      No submissions found under status: <strong>{{ filter_status|capitalize }}</strong>.
+    </p>
+  </div>
+{% endif %}
+
+<!-- Reject Modal Dialog -->
+<div id="reject-modal" class="modal-backdrop">
+  <div class="modal-card" style="max-width: 480px;">
+    <div class="modal-header">
+      <h3 style="font-size: 1.1rem; color: #fff;">Reject Submission</h3>
+      <button class="alert-close" onclick="closeModal('reject-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="reject-form" onsubmit="submitReject(event)">
+        <input type="hidden" id="reject-sub-id" value="">
+
+        <div class="form-group">
+          <label class="form-label">Select Predefined Reason</label>
+          <select id="reject-preset" class="form-control" onchange="applyRejectPreset(this.value)">
+            <option value="Invalid screenshot proof provided">Invalid screenshot proof provided</option>
+            <option value="Screenshot is blurry or unreadable">Screenshot is blurry or unreadable</option>
+            <option value="Task requirements were not satisfied">Task requirements were not satisfied</option>
+            <option value="Duplicate screenshot re-submission">Duplicate screenshot re-submission</option>
+            <option value="custom">Custom reason...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reject-custom-reason">Reason Description</label>
+          <textarea id="reject-custom-reason" class="form-control" rows="3" required>Invalid screenshot proof provided</textarea>
+        </div>
+
+        <div class="modal-footer" style="padding: 0; margin-top: 1rem; border-top: none;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('reject-modal')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function applyRejectPreset(val) {
+    if (val !== 'custom') {
+      document.getElementById('reject-custom-reason').value = val;
+    } else {
+      document.getElementById('reject-custom-reason').value = '';
+      document.getElementById('reject-custom-reason').focus();
+    }
+  }
+
+  function openRejectDialog(subId) {
+    document.getElementById('reject-sub-id').value = subId;
+    openModal('reject-modal');
+  }
+
+  async function seamlessApprove(subId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Approving...';
+    try {
+      const response = await fetch(`/admin/reviews/${subId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      if (data.success) {
+        const card = document.getElementById(`sub-card-${subId}`);
+        card.style.background = 'rgba(16, 185, 129, 0.15)';
+        card.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+        btn.parentElement.innerHTML = `
+          <span class="badge badge-emerald" style="padding: 0.5rem; justify-content: center;">
+            ✓ Approved (+${data.reward})
+          </span>
+          <div style="font-size: 0.75rem; color: #34d399; text-align: center; margin-top: 0.25rem;">Credited instantly!</div>
+        `;
+      } else {
+        alert(data.message || 'Error approving submission');
+        btn.disabled = false;
+        btn.innerHTML = '✓ 1-Click Approve';
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error approving submission');
+      btn.disabled = false;
+      btn.innerHTML = '✓ 1-Click Approve';
+    }
+  }
+
+  async function submitReject(e) {
+    e.preventDefault();
+    const subId = document.getElementById('reject-sub-id').value;
+    const reason = document.getElementById('reject-custom-reason').value.trim();
+    if (!reason) return;
+
+    try {
+      const response = await fetch(`/admin/reviews/${subId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason })
+      });
+      const data = await response.json();
+      if (data.success) {
+        closeModal('reject-modal');
+        const card = document.getElementById(`sub-card-${subId}`);
+        card.style.background = 'rgba(244, 63, 94, 0.15)';
+        card.style.borderColor = 'rgba(244, 63, 94, 0.5)';
+        const actionsDiv = card.querySelector('div:last-child');
+        actionsDiv.innerHTML = `
+          <span class="badge badge-rose" style="padding: 0.5rem; justify-content: center;">
+            ✕ Rejected
+          </span>
+          <div style="font-size: 0.75rem; color: #fda4af; text-align: center; margin-top: 0.25rem;">${reason}</div>
+        `;
+      } else {
+        alert(data.message || 'Error rejecting submission');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error rejecting submission');
+    }
+  }
+</script>
+{% endblock %}

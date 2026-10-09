@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }} - QuestPlatform{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="{{ url_for('main.quests') }}" style="color: var(--text-muted); font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+    &larr; Back to Quests Catalog
+  </a>
+</div>
+
+<div class="grid grid-cols-3" style="gap: 2rem; align-items: start;">
+  
+  <!-- Left 2 Cols: Quest Instructions & Steps -->
+  <div style="grid-column: span 2;">
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div class="card-header" style="align-items: flex-start;">
+        <div>
+          <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+            <span class="badge badge-indigo">{{ task.category }}</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Posted {{ task.created_at|datetimeformat('%b %d, %Y') }}</span>
+          </div>
+          <h1 style="font-size: 1.65rem;">{{ task.title }}</h1>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Quest Reward</div>
+          <div style="font-size: 1.6rem; font-weight: 900; color: #34d399; font-family: var(--font-display);">
+            {{ task_reward|currency }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button to Open Target URL -->
+      <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 1.25rem; margin: 1.5rem 0; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+        <div>
+          <div style="font-weight: 700; color: #f8fafc; font-size: 1rem; margin-bottom: 0.2rem;">Step 1: Open Target Quest Link</div>
+          <div style="font-size: 0.85rem; color: #94a3b8;">Click the button to visit the external website / social link in a new tab.</div>
+        </div>
+        <a href="{{ task.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="gap: 0.5rem;">
+          🔗 Visit Quest Link &rarr;
+        </a>
+      </div>
+
+      <!-- Detailed Instructions -->
+      <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem;">📋 Quest Instructions & Requirements:</h3>
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; font-size: 0.95rem; line-height: 1.7; color: var(--text-primary); white-space: pre-line; margin-bottom: 1.5rem;">
+        {{ task.instructions }}
+      </div>
+
+      <!-- Quality Guidelines Alert -->
+      <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-md); padding: 1rem; font-size: 0.85rem; color: #fbbf24;">
+        <strong>⚠️ Proof Quality Guidelines:</strong> Ensure your screenshot clearly displays the completed action, timestamps/usernames if applicable, and is not blurred or cropped. Duplicate screenshots are automatically flagged.
+      </div>
+    </div>
+
+    <!-- Ad Unit -->
+    {% include 'ads/ad_unit.html' %}
+  </div>
+
+  <!-- Right 1 Col: Proof Upload or Current Status -->
+  <div>
+    <div class="card" style="border-color: rgba(99, 102, 241, 0.3);">
+      <h3 class="card-title" style="margin-bottom: 1rem;">📸 Submit Proof</h3>
+
+      {% if existing_sub %}
+        <div style="margin-bottom: 1.5rem; padding: 1rem; border-radius: var(--radius-md); {% if existing_sub.status == 'approved' %}background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);{% elif existing_sub.status == 'rejected' %}background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3);{% else %}background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3);{% endif %}">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="font-weight: 700; font-size: 0.9rem;">Status:</span>
+            {% if existing_sub.status == 'approved' %}
+              <span class="badge badge-emerald">✓ Approved (+{{ existing_sub.reward_paid|currency }})</span>
+            {% elif existing_sub.status == 'rejected' %}
+              <span class="badge badge-rose">✕ Rejected</span>
+            {% else %}
+              <span class="badge badge-amber">⏳ Pending Review</span>
+            {% endif %}
+          </div>
+
+          {% if existing_sub.rejection_reason %}
+            <div style="font-size: 0.825rem; color: #fda4af; margin-top: 0.5rem;">
+              <strong>Rejection Reason:</strong> {{ existing_sub.rejection_reason }}
+            </div>
+          {% endif %}
+
+          <div style="margin-top: 0.75rem;">
+            <div style="font-size: 0.775rem; color: var(--text-muted); margin-bottom: 0.35rem;">Submitted Screenshot:</div>
+            <img src="{{ url_for('static', filename='uploads/proofs/' + existing_sub.screenshot_path) }}" 
+                 alt="Submitted proof" 
+                 style="width: 100%; max-height: 180px; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--border-color);"
+                 onclick="openLightbox('{{ url_for('static', filename='uploads/proofs/' + existing_sub.screenshot_path) }}', 'Your Submitted Proof')" />
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 0.25rem;">(Click image to enlarge)</div>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if not existing_sub or existing_sub.status == 'rejected' %}
+        <form method="POST" action="{{ url_for('main.quest_detail', task_id=task.id) }}" enctype="multipart/form-data">
+          
+          <div class="form-group">
+            <label class="form-label" for="screenshot-upload">
+              Upload Screenshot Proof <span style="color: var(--accent-rose);">*</span>
+            </label>
+            <input type="file" id="screenshot-upload" name="screenshot" accept="image/png, image/jpeg, image/webp" class="form-control" style="padding: 0.5rem;" required>
+            <div class="form-text">Accepted: PNG, JPG, WEBP (Max 10MB)</div>
+          </div>
+
+          <!-- Live Image Preview Container -->
+          <div id="screenshot-preview-container" style="display: none; margin-bottom: 1.25rem;">
+            <div style="font-size: 0.775rem; color: var(--text-muted); margin-bottom: 0.35rem;">Preview:</div>
+            <img id="screenshot-preview-img" src="" alt="Preview" style="width: 100%; max-height: 200px; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: #000;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="notes">Additional Proof Notes (Optional)</label>
+            <textarea id="notes" name="notes" class="form-control" rows="2" placeholder="e.g. Registered with username @myuser, completed on 2:30 PM"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-emerald" style="width: 100%;">
+            🚀 Submit Proof for Approval
+          </button>
+        </form>
+      {% elif existing_sub.status == 'pending' %}
+        <p style="font-size: 0.875rem; color: var(--text-muted); text-align: center;">
+          Your screenshot proof has been received and is in the admin review queue. You will be credited as soon as it is approved.
+        </p>
+      {% elif existing_sub.status == 'approved' %}
+        <p style="font-size: 0.875rem; color: #34d399; text-align: center; font-weight: 600;">
+          Quest completed! The reward of {{ existing_sub.reward_paid|currency }} has already been added to your wallet balance.
+        </p>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

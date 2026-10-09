@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Quests & Tasks - QuestPlatform{% endblock %}
+
+{% block content %}
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">🎯 Available Quests</h1>
+    <p style="font-size: 0.95rem;">Complete tasks, submit screenshot proof, and receive instant cash rewards in your wallet.</p>
+  </div>
+  <div class="badge badge-emerald" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+    Reward Rate: {{ economy.task_reward|currency }} / Quest
+  </div>
+</div>
+
+<!-- Category Filters -->
+<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem;">
+  <a href="{{ url_for('main.quests') }}" class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-secondary{% endif %}">
+    All Quests
+  </a>
+  {% for cat in categories %}
+    <a href="{{ url_for('main.quests', category=cat) }}" class="btn btn-sm {% if selected_category == cat %}btn-primary{% else %}btn-secondary{% endif %}">
+      {{ cat }}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- Quests Grid -->
+{% if tasks %}
+  <div class="grid grid-cols-3" style="gap: 1.5rem; margin-bottom: 2rem;">
+    {% for task in tasks %}
+      {% set sub = user_submissions.get(task.id) %}
+      <div class="card card-hoverable" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <span class="badge badge-indigo">{{ task.category }}</span>
+            <span style="font-weight: 800; color: #34d399; font-size: 1.1rem; font-family: var(--font-display);">
+              {{ (task.reward_amount if task.reward_amount is not none else economy.task_reward)|currency }}
+            </span>
+          </div>
+
+          <h3 style="font-size: 1.15rem; margin-bottom: 0.65rem;">{{ task.title }}</h3>
+          
+          <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+            {{ task.instructions }}
+          </p>
+        </div>
+
+        <div style="padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+          <div>
+            {% if sub %}
+              {% if sub.status == 'approved' %}
+                <span class="badge badge-emerald">✓ Completed</span>
+              {% elif sub.status == 'rejected' %}
+                <span class="badge badge-rose" title="{{ sub.rejection_reason }}">✕ Rejected (Retry)</span>
+              {% else %}
+                <span class="badge badge-amber">⏳ In Review</span>
+              {% endif %}
+            {% else %}
+              <span class="badge" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">Available</span>
+            {% endif %}
+          </div>
+
+          <a href="{{ url_for('main.quest_detail', task_id=task.id) }}" class="btn btn-sm {% if sub and sub.status == 'approved' %}btn-secondary{% else %}btn-primary{% endif %}">
+            {% if sub and sub.status == 'approved' %}View Details{% elif sub and sub.status == 'pending' %}View Proof{% elif sub and sub.status == 'rejected' %}Re-submit{% else %}Start Quest &rarr;{% endif %}
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card" style="text-align: center; padding: 4rem 1.5rem; margin-bottom: 2rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+    <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">No Quests Found</h3>
+    <p style="max-width: 480px; margin: 0 auto; color: var(--text-muted);">
+      There are currently no active quests in this category. Check back soon or browse other categories!
+    </p>
+  </div>
+{% endif %}
+
+<!-- Strategic Ad Slot -->
+{% include 'ads/ad_unit.html' %}
+{% endblock %}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}QuestPlatform - Complete Quests & Earn Daily Rewards{% endblock %}</title>
+  <meta name="description" content="Gamified reward platform. Complete tasks, build your 2-tier referral network, and earn cash payouts every Friday!">
+  
+  <!-- Favicon Icon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  {% if economy.google_ads_enabled and economy.google_ads_client_id %}
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ economy.google_ads_client_id }}" crossorigin="anonymous"></script>
+  {% endif %}
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="app-container">
+      <div class="nav-wrapper">
+        <a href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('main.index') }}" class="brand-logo">
+          <div class="brand-icon">⚔️</div>
+          <span>Quest<span class="gradient-text">Platform</span></span>
+        </a>
+
+        <nav>
+          <ul class="nav-links">
+            {% if current_user.is_authenticated %}
+              <li><a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}">📊 Dashboard</a></li>
+              <li><a href="{{ url_for('main.quests') }}" class="nav-link {% if 'quests' in request.endpoint %}active{% endif %}">🎯 Quests</a></li>
+              <li><a href="{{ url_for('main.referrals') }}" class="nav-link {% if request.endpoint == 'main.referrals' %}active{% endif %}">👥 Referrals</a></li>
+              <li><a href="{{ url_for('main.leaderboard') }}" class="nav-link {% if request.endpoint == 'main.leaderboard' %}active{% endif %}">🏆 Leaderboard</a></li>
+              <li><a href="{{ url_for('main.wallet') }}" class="nav-link {% if request.endpoint == 'main.wallet' %}active{% endif %}">💳 Wallet</a></li>
+            {% else %}
+              <li><a href="{{ url_for('main.index') }}" class="nav-link">Home</a></li>
+              <li><a href="{{ url_for('main.rules') }}" class="nav-link">How it Works</a></li>
+              <li><a href="{{ url_for('main.leaderboard') }}" class="nav-link">Leaderboard</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+
+        <div class="nav-actions">
+          {% if current_user.is_authenticated %}
+            {% if current_user.is_admin %}
+              <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-outline-primary" style="border-color: #a855f7; color: #c084fc;">
+                🛡️ Admin
+              </a>
+            {% endif %}
+
+            <div class="user-pill">
+              <div class="user-avatar-sm">{{ current_user.username[:1].upper() }}</div>
+              <span class="user-pill-name">@{{ current_user.username }}</span>
+              <span class="user-pill-balance">{{ current_user.wallet_balance|currency }}</span>
+            </div>
+
+            <a href="{{ url_for('main.profile') }}" class="btn btn-sm btn-secondary" title="Account Settings">⚙️</a>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-secondary" title="Logout">🚪</a>
+          {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-secondary">Log In</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-primary">Join Now</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body Content -->
+  <main class="main-content">
+    <div class="app-container">
+      
+      <!-- Flash Alert Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="alert-container">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                <span>{{ message }}</span>
+                <button class="alert-close" aria-label="Close">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page Block Content -->
+      {% block content %}{% endblock %}
+
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="app-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo" style="margin-bottom: 0.5rem;">
+            <div class="brand-icon" style="width: 32px; height: 32px; font-size: 1rem;">⚔️</div>
+            <span>Quest<span class="gradient-text">Platform</span></span>
+          </div>
+          <p>The premier gamified reward ecosystem. Complete tasks, refer friends across 2-tiers, and cash out every Friday.</p>
+        </div>
+
+        <div class="footer-col">
+          <h5>Platform</h5>
+          <ul>
+            <li><a href="{{ url_for('main.quests') if current_user.is_authenticated else url_for('auth.register') }}">Browse Quests</a></li>
+            <li><a href="{{ url_for('main.referrals') if current_user.is_authenticated else url_for('auth.register') }}">2-Tier Referral Hub</a></li>
+            <li><a href="{{ url_for('main.leaderboard') }}">Leaderboard</a></li>
+            <li><a href="{{ url_for('main.rules') }}">Platform Rules & FAQ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Community</h5>
+          <ul>
+            <li><a href="#">Telegram Channel</a></li>
+            <li><a href="#">WhatsApp Group</a></li>
+            <li><a href="#">X / Twitter</a></li>
+            <li><a href="#">Support Center</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Economics</h5>
+          <ul>
+            <li><span style="color: #94a3b8; font-size: 0.85rem;">Access Code: <strong style="color: #f8fafc;">{{ economy.x_price|currency }}</strong></span></li>
+            <li><span style="color: #94a3b8; font-size: 0.85rem;">Direct Referral: <strong style="color: #34d399;">{{ economy.tier1_reward|currency }}</strong> (20%)</span></li>
+            <li><span style="color: #94a3b8; font-size: 0.85rem;">2nd-Tier Referral: <strong style="color: #38bdf8;">{{ economy.tier2_reward|currency }}</strong> (5%)</span></li>
+            <li><span style="color: #94a3b8; font-size: 0.85rem;">Task Reward: <strong style="color: #fbbf24;">{{ economy.task_reward|currency }}</strong> (2.5%)</span></li>
+            <li><span style="color: #94a3b8; font-size: 0.85rem;">Payouts: <strong style="color: #a5b4fc;">Every Friday</strong></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>&copy; {{ now_year }} {{ economy.site_name }}. All rights reserved.</span>
+        <span>Secure Payouts • SSL Encrypted • Verified Tasks</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core JavaScript -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

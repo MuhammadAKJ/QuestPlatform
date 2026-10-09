@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Admin Center - QuestPlatform{% endblock %}</title>
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .admin-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .admin-sidebar {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      position: sticky;
+      top: 5rem;
+    }
+    .admin-menu-heading {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin: 1.25rem 0 0.5rem 0.75rem;
+    }
+    .admin-menu-heading:first-child {
+      margin-top: 0;
+    }
+    .admin-nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+      transition: all var(--transition-fast);
+    }
+    .admin-nav-item:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .admin-nav-item.active {
+      color: #c084fc;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+    }
+    .admin-badge {
+      background: var(--accent-rose);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-full);
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="app-container">
+      <div class="nav-wrapper">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <a href="{{ url_for('admin.dashboard') }}" class="brand-logo">
+            <div class="brand-icon" style="background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);">🛡️</div>
+            <span>Quest<span class="gradient-text" style="background: linear-gradient(135deg, #c084fc 0%, #f43f5e 100%); -webkit-background-clip: text;">Admin</span></span>
+          </a>
+          <span class="badge badge-purple" style="font-size: 0.7rem;">Control Center</span>
+        </div>
+
+        <div class="nav-actions">
+          <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-secondary">
+            🌐 User Portal
+          </a>
+          <div class="user-pill">
+            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff;">A</div>
+            <span class="user-pill-name">@{{ current_user.username }}</span>
+          </div>
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-secondary" title="Logout">🚪</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="app-container">
+      
+      <!-- Flash Alert Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="alert-container">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                <span>{{ message }}</span>
+                <button class="alert-close" aria-label="Close">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <div class="admin-layout">
+        <!-- Admin Navigation Sidebar -->
+        <aside class="admin-sidebar">
+          <div class="admin-menu-heading">Overview</div>
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+            <span>📊 Analytics & KPIs</span>
+          </a>
+
+          <div class="admin-menu-heading">Operations</div>
+          <a href="{{ url_for('admin.reviews') }}" class="admin-nav-item {% if request.endpoint == 'admin.reviews' %}active{% endif %}">
+            <span>📝 Review Queue</span>
+            {% set pending_subs = TaskSubmission.query.filter_by(status='pending').count() if TaskSubmission is defined else 0 %}
+          </a>
+
+          <a href="{{ url_for('admin.codes') }}" class="admin-nav-item {% if request.endpoint == 'admin.codes' %}active{% endif %}">
+            <span>🔑 Access Codes</span>
+          </a>
+
+          <a href="{{ url_for('admin.tasks') }}" class="admin-nav-item {% if request.endpoint == 'admin.tasks' %}active{% endif %}">
+            <span>🎯 Quests Manager</span>
+          </a>
+
+          <a href="{{ url_for('admin.withdrawals') }}" class="admin-nav-item {% if request.endpoint == 'admin.withdrawals' %}active{% endif %}">
+            <span>💳 Friday Payouts</span>
+          </a>
+
+          <div class="admin-menu-heading">System</div>
+          <a href="{{ url_for('admin.users') }}" class="admin-nav-item {% if request.endpoint == 'admin.users' %}active{% endif %}">
+            <span>👥 User Directory</span>
+          </a>
+
+          <a href="{{ url_for('admin.settings') }}" class="admin-nav-item {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+            <span>⚙️ Platform Economy</span>
+          </a>
+        </aside>
+
+        <!-- Admin Main Content -->
+        <section class="admin-main">
+          {% block admin_content %}{% endblock %}
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

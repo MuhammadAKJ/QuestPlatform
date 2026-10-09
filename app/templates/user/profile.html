@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Settings & Payout Profile - QuestPlatform{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">⚙️ Profile & Payout Settings</h1>
+    <p style="font-size: 0.95rem;">Configure your bank account for Friday payouts and manage your security settings.</p>
+  </div>
+
+  <div class="grid grid-cols-2" style="gap: 2rem; align-items: start;">
+    
+    <!-- Bank Payout Form -->
+    <div class="card" style="border-color: rgba(16, 185, 129, 0.3);">
+      <div class="card-header">
+        <h3 class="card-title">🏦 Bank Payout Details</h3>
+        {% if current_user.has_payout_details %}
+          <span class="badge badge-emerald">Configured</span>
+        {% else %}
+          <span class="badge badge-amber">Required for Payouts</span>
+        {% endif %}
+      </div>
+
+      <form method="POST" action="{{ url_for('main.profile') }}">
+        <input type="hidden" name="action" value="update_bank">
+
+        <div class="form-group">
+          <label class="form-label" for="bank_name">Bank / Institution Name</label>
+          <input type="text" id="bank_name" name="bank_name" value="{{ current_user.bank_name or '' }}" class="form-control" placeholder="e.g. Access Bank, GTBank, Chase, Revolut" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="account_number">Account Number / IBAN</label>
+          <input type="text" id="account_number" name="account_number" value="{{ current_user.account_number or '' }}" class="form-control" placeholder="e.g. 0123456789" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="account_name">Account Holder Full Name</label>
+          <input type="text" id="account_name" name="account_name" value="{{ current_user.account_name or '' }}" class="form-control" placeholder="e.g. John Doe" required>
+        </div>
+
+        <button type="submit" class="btn btn-emerald" style="width: 100%;">
+          💾 Save Bank Details
+        </button>
+      </form>
+    </div>
+
+    <!-- Security & Password Form -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">🔒 Change Password</h3>
+      </div>
+
+      <form method="POST" action="{{ url_for('main.profile') }}">
+        <input type="hidden" name="action" value="change_password">
+
+        <div class="form-group">
+          <label class="form-label" for="current_password">Current Password</label>
+          <input type="password" id="current_password" name="current_password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="new_password">New Password</label>
+          <input type="password" id="new_password" name="new_password" class="form-control" placeholder="Min 6 characters" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm New Password</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat new password" required>
+        </div>
+
+        <button type="submit" class="btn btn-secondary" style="width: 100%;">
+          Update Password
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Account Meta Card -->
+  <div class="card" style="margin-top: 2rem;">
+    <h3 class="card-title" style="margin-bottom: 1rem;">ℹ️ Account Information</h3>
+    <div class="grid grid-cols-3" style="gap: 1.5rem;">
+      <div>
+        <div style="font-size: 0.775rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Username</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">@{{ current_user.username }}</div>
+      </div>
+      <div>
+        <div style="font-size: 0.775rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Referral Code</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #818cf8; font-family: monospace;">{{ current_user.referral_code }}</div>
+      </div>
+      <div>
+        <div style="font-size: 0.775rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Member Since</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #34d399;">{{ current_user.created_at|datetimeformat('%B %d, %Y') }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ad Slot -->
+  {% include 'ads/ad_unit.html' %}
+</div>
+{% endblock %}

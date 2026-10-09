@@ -1,0 +1,178 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Admin Analytics & KPIs - QuestPlatform{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">📊 Admin Control Center</h1>
+    <p style="font-size: 0.95rem;">Real-time platform metrics, revenue tracking, and operational queues.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="{{ url_for('admin.reviews') }}" class="btn btn-emerald">
+      📝 Review Queue ({{ pending_submissions_count }})
+    </a>
+    <a href="{{ url_for('admin.codes') }}" class="btn btn-primary">
+      🔑 Generate Codes
+    </a>
+  </div>
+</div>
+
+<!-- Financial Overview Cards -->
+<div class="grid grid-cols-4" style="margin-bottom: 1.75rem;">
+  <!-- Gross Code Sales -->
+  <div class="card stat-card">
+    <div class="stat-icon indigo">🎟️</div>
+    <div class="stat-content">
+      <div class="stat-label">Gross Code Revenue</div>
+      <div class="stat-value" style="color: #818cf8;">{{ gross_code_revenue|currency }}</div>
+      <div class="stat-sub">{{ used_codes_count }} codes sold @ {{ economy.x_price|currency }}</div>
+    </div>
+  </div>
+
+  <!-- Commissions Paid Out -->
+  <div class="card stat-card">
+    <div class="stat-icon purple">👥</div>
+    <div class="stat-content">
+      <div class="stat-label">Commissions Distributed</div>
+      <div class="stat-value" style="color: #c084fc;">{{ total_commissions_paid|currency }}</div>
+      <div class="stat-sub">Tier 1 + Tier 2 payouts</div>
+    </div>
+  </div>
+
+  <!-- Task Rewards Paid -->
+  <div class="card stat-card">
+    <div class="stat-icon amber">🎯</div>
+    <div class="stat-content">
+      <div class="stat-label">Task Rewards Paid</div>
+      <div class="stat-value" style="color: #fbbf24;">{{ total_task_rewards_paid|currency }}</div>
+      <div class="stat-sub">Approved quest proofs</div>
+    </div>
+  </div>
+
+  <!-- House Net Margin -->
+  <div class="card stat-card" style="border-color: rgba(16, 185, 129, 0.4);">
+    <div class="stat-icon emerald">🏦</div>
+    <div class="stat-content">
+      <div class="stat-label">House Net Margin</div>
+      <div class="stat-value" style="color: #34d399;">{{ house_net_margin|currency }}</div>
+      <div class="stat-sub">Retained revenue & profit</div>
+    </div>
+  </div>
+</div>
+
+<!-- Operations Status Queues -->
+<div class="grid grid-cols-3" style="gap: 1.5rem; margin-bottom: 2rem;">
+  
+  <!-- Pending Reviews Queue Card -->
+  <div class="card" style="border-color: {% if pending_submissions_count > 0 %}rgba(245, 158, 11, 0.4){% else %}var(--border-color){% endif %};">
+    <div class="card-header">
+      <h3 class="card-title">📝 Task Submissions Queue</h3>
+      <span class="badge {% if pending_submissions_count > 0 %}badge-amber{% else %}badge-emerald{% endif %}">
+        {{ pending_submissions_count }} Pending
+      </span>
+    </div>
+    <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1.25rem;">
+      User screenshots waiting for verification and reward credit.
+    </p>
+    <a href="{{ url_for('admin.reviews') }}" class="btn btn-primary" style="width: 100%;">
+      Open Fast-Approval Center &rarr;
+    </a>
+  </div>
+
+  <!-- Friday Payouts Queue Card -->
+  <div class="card" style="border-color: {% if pending_withdrawals_count > 0 %}rgba(16, 185, 129, 0.4){% else %}var(--border-color){% endif %};">
+    <div class="card-header">
+      <h3 class="card-title">💳 Friday Payouts Queue</h3>
+      <span class="badge {% if pending_withdrawals_count > 0 %}badge-emerald{% else %}badge-indigo{% endif %}">
+        {{ pending_withdrawals_count }} Requests
+      </span>
+    </div>
+    <div style="font-size: 1.4rem; font-weight: 800; color: #34d399; margin-bottom: 0.25rem;">
+      {{ pending_withdrawals_amount|currency }}
+    </div>
+    <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.25rem;">
+      Total pending bank transfer payouts for this cycle.
+    </p>
+    <a href="{{ url_for('admin.withdrawals') }}" class="btn btn-emerald" style="width: 100%;">
+      Manage Payouts & Export &rarr;
+    </a>
+  </div>
+
+  <!-- Access Codes Inventory Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">🔑 Access Code Inventory</h3>
+      <span class="badge badge-cyan">{{ unused_codes_count }} Available</span>
+    </div>
+    <div style="font-size: 1.4rem; font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem;">
+      {{ total_codes_count }} Total Generated
+    </div>
+    <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.25rem;">
+      {{ used_codes_count }} codes used by registered members.
+    </p>
+    <a href="{{ url_for('admin.codes') }}" class="btn btn-secondary" style="width: 100%;">
+      Generate & Export Codes &rarr;
+    </a>
+  </div>
+
+</div>
+
+<!-- Recent Pending Submissions Snippet -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">⚡ Quick Task Review Snippet</h3>
+      <p class="card-subtitle">Earliest pending submissions awaiting review</p>
+    </div>
+    <a href="{{ url_for('admin.reviews') }}" class="btn btn-sm btn-outline-primary">Open Full Review Queue &rarr;</a>
+  </div>
+
+  {% if recent_pending_submissions %}
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Task</th>
+            <th>Proof Thumbnail</th>
+            <th>Submitted</th>
+            <th>Quick Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in recent_pending_submissions %}
+          <tr>
+            <td style="font-weight: 600; color: var(--text-primary);">
+              @{{ sub.user.username }}
+            </td>
+            <td>
+              <div style="font-weight: 600; color: var(--text-primary);">{{ sub.task.title }}</div>
+              <div style="font-size: 0.775rem; color: #34d399;">+{{ (sub.task.reward_amount if sub.task.reward_amount is not none else economy.task_reward)|currency }}</div>
+            </td>
+            <td>
+              <img src="{{ url_for('static', filename='uploads/proofs/' + sub.screenshot_path) }}" 
+                   alt="Proof" 
+                   style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color);"
+                   onclick="openLightbox('{{ url_for('static', filename='uploads/proofs/' + sub.screenshot_path) }}', 'Submission proof by @{{ sub.user.username }}')" />
+            </td>
+            <td style="font-size: 0.8rem;">
+              {{ sub.created_at|datetimeformat('%b %d, %I:%M %p') }}
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('admin.approve_submission', submission_id=sub.id) }}" style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-emerald">✓ Approve</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+      ✓ No pending submissions in the queue right now!
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
