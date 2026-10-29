@@ -19,15 +19,28 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # On Vercel the filesystem is read-only except /tmp
+    is_vercel = os.environ.get('VERCEL', '')
+
+    if is_vercel:
+        app.config['UPLOAD_FOLDER'] = Path('/tmp/uploads/proofs')
+
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
 
-    # Ensure instance and upload directories exist
+    # Ensure upload directory exists (uses /tmp on Vercel)
     upload_dir = Path(app.config['UPLOAD_FOLDER'])
     upload_dir.mkdir(parents=True, exist_ok=True)
-    instance_dir = Path(app.root_path).parent / 'instance'
-    instance_dir.mkdir(parents=True, exist_ok=True)
+
+    # Only create instance dir locally (not on Vercel – read-only FS)
+    if not is_vercel:
+        instance_dir = Path(app.root_path).parent / 'instance'
+        instance_dir.mkdir(parents=True, exist_ok=True)
+
+    # Auto-create database tables (safe for both SQLite and Turso)
+    with app.app_context():
+        db.create_all()
 
     # Context processors and global template helpers
     from app.utils import get_system_economy, format_currency
@@ -79,3 +92,4 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
 
     return app
+
