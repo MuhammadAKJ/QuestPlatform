@@ -1,0 +1,24 @@
+name = "quest-platform"
+main = "src/worker.py"
+compatibility_date = "2026-09-23"
+compatibility_flags = ["python_workers"]
+
+[observability]
+enabled = true
+
+# Cloudflare D1 database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "questplatform_db"
+database_id = "21f76cdc-9236-4fe9-a81b-b2ebd3c9f678"
+
+# Static assets (CSS, JS, images, etc.)
+[assets]
+directory = "app/static"
+binding = "ASSETS"
+
+# Environment variables (secrets should be set via `wrangler secret put`)
+[vars]
+DEFAULT_ACCESS_CODE_PRICE = "5000.0"
+DEFAULT_CURRENCY_SYMBOL = "₦"
+DEFAULT_SITE_NAME = "QuestPlatform"

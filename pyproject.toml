@@ -1,0 +1,14 @@
+[project]
+name = "quest-platform"
+version = "0.1.0"
+description = "QuestPlatform – referral-based task rewards platform on Cloudflare Workers"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0.0",
+    "flask-sqlalchemy>=3.1.0",
+    "flask-login>=0.6.3",
+    "werkzeug>=3.0.0",
+    "workers-py",
+    "sqlalchemy",
+    "sqlalchemy-cloudflare-d1",
+]

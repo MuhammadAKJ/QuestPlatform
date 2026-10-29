@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from flask import Flask
 from flask_login import LoginManager
-from app.config import Config
+from app.config import Config, IS_CLOUDFLARE, IS_VERCEL
 from app.models import db, User
 
 login_manager = LoginManager()
@@ -19,28 +19,31 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # On Vercel the filesystem is read-only except /tmp
-    is_vercel = os.environ.get('VERCEL', '')
-
-    if is_vercel:
+    # Both Vercel and Cloudflare have read-only filesystems except /tmp
+    if IS_VERCEL or IS_CLOUDFLARE:
         app.config['UPLOAD_FOLDER'] = Path('/tmp/uploads/proofs')
 
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
 
-    # Ensure upload directory exists (uses /tmp on Vercel)
-    upload_dir = Path(app.config['UPLOAD_FOLDER'])
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    # Ensure upload directory exists (/tmp on serverless platforms)
+    try:
+        upload_dir = Path(app.config['UPLOAD_FOLDER'])
+        upload_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass  # Cloudflare Workers may not support mkdir
 
-    # Only create instance dir locally (not on Vercel – read-only FS)
-    if not is_vercel:
+    # Only create instance dir in local dev (not on serverless platforms)
+    if not IS_VERCEL and not IS_CLOUDFLARE:
         instance_dir = Path(app.root_path).parent / 'instance'
         instance_dir.mkdir(parents=True, exist_ok=True)
 
-    # Auto-create database tables (safe for both SQLite and Turso)
-    with app.app_context():
-        db.create_all()
+    # Auto-create database tables
+    # On Cloudflare D1, use wrangler d1 migrations instead
+    if not IS_CLOUDFLARE:
+        with app.app_context():
+            db.create_all()
 
     # Context processors and global template helpers
     from app.utils import get_system_economy, format_currency
@@ -92,4 +95,3 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
 
     return app
-
