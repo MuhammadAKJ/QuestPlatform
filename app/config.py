@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+# pyrefly: ignore[missing-import]
 from dotenv import load_dotenv
 
 # Load .env if present
@@ -9,7 +10,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'quest-platform-super-secret-key-2026-change-in-prod')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'instance' / 'quest_platform.db'}")
+
+    # Database: Turso (libSQL) in production, SQLite locally
+    QUEST_TURSO_DATABASE_URL = os.environ.get('QUEST_TURSO_DATABASE_URL', '')
+    QUEST_TURSO_AUTH_TOKEN = os.environ.get('QUEST_TURSO_AUTH_TOKEN', '')
+
+    if QUEST_TURSO_DATABASE_URL:
+        # Convert  libsql://your-db-name.turso.io  →  sqlite+libsql://your-db-name.turso.io
+        _db_url = QUEST_TURSO_DATABASE_URL.replace('libsql://', 'sqlite+libsql://')
+        if  QUEST_TURSO_AUTH_TOKEN:
+            _db_url += f'?authToken={QUEST_TURSO_AUTH_TOKEN}&secure=true'
+        SQLALCHEMY_DATABASE_URI = _db_url
+    else:
+        SQLALCHEMY_DATABASE_URI = os.environ.get(
+            'DATABASE_URL',
+            f"sqlite:///{BASE_DIR / 'instance' / 'quest_platform.db'}"
+        )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Upload settings
