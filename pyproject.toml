@@ -12,3 +12,6 @@ dependencies = [
     "sqlalchemy",
     "sqlalchemy-cloudflare-d1",
 ]
+
+[project.optional-dependencies]
+turso = ["sqlalchemy-libsql>=0.1.0"]
