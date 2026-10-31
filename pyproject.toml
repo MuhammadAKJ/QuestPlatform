@@ -1,5 +1,5 @@
 [project]
-name = "quest-platform"
+name = "questplatform"
 version = "0.1.0"
 description = "QuestPlatform – referral-based task rewards platform on Cloudflare Workers"
 requires-python = ">=3.10"
