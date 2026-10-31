@@ -1,4 +1,4 @@
-name = "quest-platform"
+name = "questplatform"
 main = "src/worker.py"
 compatibility_date = "2026-09-23"
 compatibility_flags = ["python_workers"]
