@@ -18,4 +18,4 @@ dependencies = [
 turso = ["sqlalchemy-libsql>=0.1.0"]
 
 [dependency-groups]
-dev = ["workers-py>=1.14.1", "workers-runtime-sdk"]
+dev = ["workers-py<=1.14.0", "workers-runtime-sdk"]
