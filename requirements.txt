@@ -4,6 +4,6 @@ flask-login>=0.6.3
 werkzeug>=3.0.0
 pillow>=10.0.0
 python-dotenv>=1.0.0
-workers-py
+workers-py>=1.9
 sqlalchemy
 sqlalchemy-cloudflare-d1
