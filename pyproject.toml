@@ -8,10 +8,14 @@ dependencies = [
     "flask-sqlalchemy>=3.1.0",
     "flask-login>=0.6.3",
     "werkzeug>=3.0.0",
-    "workers-py",
+    "pillow>=10.0.0",
+    "python-dotenv>=1.0.0",
     "sqlalchemy",
     "sqlalchemy-cloudflare-d1",
 ]
 
 [project.optional-dependencies]
 turso = ["sqlalchemy-libsql>=0.1.0"]
+
+[dependency-groups]
+dev = ["workers-py", "workers-runtime-sdk"]
