@@ -5,6 +5,7 @@ from flask import Flask
 from flask_login import LoginManager
 from app.config import Config, IS_CLOUDFLARE, IS_VERCEL
 from app.models import db, User
+import sqlalchemy_cloudflare_d1
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
