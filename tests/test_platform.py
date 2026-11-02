@@ -1,6 +1,7 @@
 import io
 import unittest
 from datetime import datetime, timezone
+from unittest.mock import patch
 from app import create_app
 from app.config import Config
 from app.models import db, User, AccessCode, Task, TaskSubmission, Withdrawal, Transaction, SystemSetting
@@ -13,6 +14,14 @@ class TestConfig(Config):
     SECRET_KEY = 'test-secret'
 
 class QuestPlatformTestCase(unittest.TestCase):
+    def test_cloudflare_startup_uses_d1_without_filesystem_writes(self):
+        with patch('pathlib.Path.mkdir') as mkdir, patch.object(db, 'create_all') as create_all:
+            app = create_app(TestConfig, cloudflare_runtime=True)
+
+        self.assertEqual(app.config['SQLALCHEMY_DATABASE_URI'], 'sqlite+d1://DB')
+        mkdir.assert_not_called()
+        create_all.assert_not_called()
+
     def setUp(self):
         self.app = create_app(TestConfig)
         self.client = self.app.test_client()

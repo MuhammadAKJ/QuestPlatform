@@ -15,12 +15,16 @@ login_manager.login_message_category = 'warning'
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
-def create_app(config_class=Config):
+def create_app(config_class=Config, cloudflare_runtime=False):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    cloudflare_runtime = cloudflare_runtime or IS_CLOUDFLARE
 
-    # Both Vercel and Cloudflare have read-only filesystems except /tmp
-    if IS_VERCEL or IS_CLOUDFLARE:
+    if cloudflare_runtime:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite+d1://DB'
+
+    # Keep serverless uploads outside the packaged application directory.
+    if IS_VERCEL or cloudflare_runtime:
         app.config['UPLOAD_FOLDER'] = Path('/tmp/uploads/proofs')
 
     # Initialize extensions
@@ -28,20 +32,21 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
 
     # Ensure upload directory exists (/tmp on serverless platforms)
-    try:
-        upload_dir = Path(app.config['UPLOAD_FOLDER'])
-        upload_dir.mkdir(parents=True, exist_ok=True)
-    except OSError:
-        pass  # Cloudflare Workers may not support mkdir
+    if not cloudflare_runtime:
+        try:
+            upload_dir = Path(app.config['UPLOAD_FOLDER'])
+            upload_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass  # Serverless filesystems may not support mkdir
 
     # Only create instance dir in local dev (not on serverless platforms)
-    if not IS_VERCEL and not IS_CLOUDFLARE:
+    if not IS_VERCEL and not cloudflare_runtime:
         instance_dir = Path(app.root_path).parent / 'instance'
         instance_dir.mkdir(parents=True, exist_ok=True)
 
     # Auto-create database tables
     # On Cloudflare D1, use wrangler d1 migrations instead
-    if not IS_CLOUDFLARE:
+    if not cloudflare_runtime:
         with app.app_context():
             db.create_all()
 
